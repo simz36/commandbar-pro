@@ -1227,4 +1227,95 @@ body {
   .domain-stats {
     color: #a0aec0;
   }
+}
+
+/* Excluded Websites */
+.excluded-websites-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.excluded-websites-input-group .option-input {
+  flex: 1;
+}
+
+.excluded-websites-hint {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.excluded-websites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.excluded-websites-empty {
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.excluded-website-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: background 0.2s;
+}
+
+.excluded-website-item:hover {
+  background: #e9ecef;
+}
+
+.excluded-website-pattern {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  color: #495057;
+  word-break: break-all;
+}
+
+.excluded-website-remove {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.excluded-website-remove:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+/* Dark mode for excluded websites */
+@media (prefers-color-scheme: dark) {
+  .excluded-website-item {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .excluded-website-item:hover {
+    background: #4a5568;
+  }
+
+  .excluded-website-pattern {
+    color: #e2e8f0;
+  }
+
+  .excluded-websites-empty {
+    color: #a0aec0;
+  }
 } 

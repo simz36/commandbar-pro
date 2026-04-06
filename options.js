@@ -125,7 +125,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Custom keyboard shortcuts (null = use manifest default)
     shortcutToggleCommandbar: null,
-    shortcutEditCurrentUrl: null
+    shortcutEditCurrentUrl: null,
+
+    // Excluded websites (array of regex pattern strings)
+    excludedWebsites: []
   };
   
   let currentSettings = { ...defaultSettings };
@@ -275,6 +278,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Update shortcut recorder displays
     updateShortcutDisplays();
+
+    // Excluded websites list
+    renderExcludedWebsitesList();
   }
 
   // Configurar event listeners
@@ -320,6 +326,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('report-bug').addEventListener('click', reportBug);
     document.getElementById('view-source').addEventListener('click', viewSource);
     
+    // Excluded websites
+    setupExcludedWebsitesListeners();
+
     // Modal
     document.getElementById('modal-close').addEventListener('click', hideModal);
     document.getElementById('modal-cancel').addEventListener('click', hideModal);
@@ -394,6 +403,98 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
   
+  // Render the excluded websites list
+  function renderExcludedWebsitesList() {
+    const listEl = document.getElementById('excluded-websites-list');
+    if (!listEl) return;
+
+    const patterns = currentSettings.excludedWebsites || [];
+    if (patterns.length === 0) {
+      const i18nInstance = window.i18n || i18n;
+      const noPatterns = (i18nInstance && typeof i18nInstance.t === 'function')
+        ? i18nInstance.t('options.excludedWebsites.noPatterns')
+        : 'No patterns configured';
+      listEl.innerHTML = `<p class="excluded-websites-empty">${noPatterns}</p>`;
+      return;
+    }
+
+    listEl.innerHTML = patterns.map((pattern, index) => `
+      <div class="excluded-website-item" data-index="${index}">
+        <code class="excluded-website-pattern">${pattern.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>
+        <button class="excluded-website-remove" data-index="${index}" type="button">&times;</button>
+      </div>
+    `).join('');
+
+    // Add remove handlers
+    listEl.querySelectorAll('.excluded-website-remove').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const idx = parseInt(this.dataset.index);
+        currentSettings.excludedWebsites.splice(idx, 1);
+        renderExcludedWebsitesList();
+        await saveSettings(false);
+        const i18nInstance = window.i18n || i18n;
+        const msg = (i18nInstance && typeof i18nInstance.t === 'function')
+          ? i18nInstance.t('options.excludedWebsites.patternRemoved')
+          : 'Pattern removed';
+        showToast(msg, 'success');
+      });
+    });
+  }
+
+  // Setup excluded websites add button
+  function setupExcludedWebsitesListeners() {
+    const input = document.getElementById('excluded-website-input');
+    const addBtn = document.getElementById('add-excluded-website');
+    if (!input || !addBtn) return;
+
+    async function addPattern() {
+      const pattern = input.value.trim();
+      if (!pattern) return;
+
+      const i18nInstance = window.i18n || i18n;
+
+      // Validate regex
+      try {
+        new RegExp(pattern);
+      } catch (e) {
+        const msg = (i18nInstance && typeof i18nInstance.t === 'function')
+          ? i18nInstance.t('options.excludedWebsites.invalidRegex')
+          : 'Invalid regex pattern';
+        showToast(msg, 'error');
+        return;
+      }
+
+      // Check for duplicates
+      if (!currentSettings.excludedWebsites) {
+        currentSettings.excludedWebsites = [];
+      }
+      if (currentSettings.excludedWebsites.includes(pattern)) {
+        const msg = (i18nInstance && typeof i18nInstance.t === 'function')
+          ? i18nInstance.t('options.excludedWebsites.duplicatePattern')
+          : 'Pattern already exists';
+        showToast(msg, 'error');
+        return;
+      }
+
+      currentSettings.excludedWebsites.push(pattern);
+      input.value = '';
+      renderExcludedWebsitesList();
+      await saveSettings(false);
+      const msg = (i18nInstance && typeof i18nInstance.t === 'function')
+        ? i18nInstance.t('options.excludedWebsites.patternAdded')
+        : 'Pattern added';
+      showToast(msg, 'success');
+    }
+
+    addBtn.addEventListener('click', addPattern);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addPattern();
+      }
+    });
+  }
+
   // Mapear ID de elemento a clave de configuración
   function getSettingKeyFromElementId(elementId) {
     const mappings = {
@@ -705,7 +806,8 @@ document.addEventListener('DOMContentLoaded', async function() {
               autoOpenNewTab: currentSettings.autoOpenNewTab,
               autoOpenDelay: currentSettings.autoOpenDelay,
               shortcutToggleCommandbar: currentSettings.shortcutToggleCommandbar,
-              shortcutEditCurrentUrl: currentSettings.shortcutEditCurrentUrl
+              shortcutEditCurrentUrl: currentSettings.shortcutEditCurrentUrl,
+              excludedWebsites: currentSettings.excludedWebsites
             }
           }).catch(() => {
             // Ignorar errores de pestañas que no pueden recibir mensajes

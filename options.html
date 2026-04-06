@@ -204,6 +204,32 @@
           </div>
         </section>
 
+        <!-- Excluded Websites -->
+        <section class="option-section">
+          <h2 class="section-title">
+            <span class="section-icon">🚫</span>
+            <span id="excluded-websites-title">Excluded Websites</span>
+          </h2>
+          <div class="option-group">
+            <div class="option-item">
+              <div class="option-info">
+                <label class="option-label" id="excluded-websites-label">Excluded Websites</label>
+                <p class="option-description" id="excluded-websites-desc">CommandBar will be disabled on sites matching these patterns</p>
+              </div>
+              <div class="excluded-websites-input-group">
+                <input type="text" id="excluded-website-input" class="option-input" placeholder="Enter a URL pattern (supports regex)" style="flex: 1;">
+                <button class="option-button primary" id="add-excluded-website" type="button">
+                  <span id="add-excluded-website-text">Add</span>
+                </button>
+              </div>
+              <p class="option-description excluded-websites-hint" id="excluded-websites-examples">Examples: .*\.google\.com, https://mail\..*</p>
+              <div class="excluded-websites-list" id="excluded-websites-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Privacidad y Datos -->
         <section class="option-section">
           <h2 class="section-title">

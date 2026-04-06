@@ -298,7 +298,21 @@ class I18n {
             shortcutInvalid: 'Se requiere al menos una tecla modificadora y una tecla regular',
             shortcutReserved: 'Este atajo está reservado por el navegador'
           },
-          
+
+          // Sitios web excluidos
+          excludedWebsites: {
+            title: 'Sitios Web Excluidos',
+            description: 'CommandBar se desactivará en los sitios que coincidan con estos patrones',
+            inputPlaceholder: 'Ingresa un patrón de URL (soporta regex)',
+            addButton: 'Agregar',
+            noPatterns: 'No hay patrones configurados',
+            examples: 'Ejemplos: .*\\.google\\.com, https://mail\\..*',
+            invalidRegex: 'Patrón de expresión regular inválido',
+            patternAdded: 'Patrón agregado correctamente',
+            patternRemoved: 'Patrón eliminado correctamente',
+            duplicatePattern: 'Este patrón ya existe'
+          },
+
           // Privacidad
           privacy: {
             dataCollection: 'Recopilación de Datos',
@@ -734,7 +748,21 @@ class I18n {
             shortcutInvalid: 'At least one modifier key and a regular key are required',
             shortcutReserved: 'This shortcut is reserved by the browser'
           },
-          
+
+          // Excluded websites
+          excludedWebsites: {
+            title: 'Excluded Websites',
+            description: 'CommandBar will be disabled on sites matching these patterns',
+            inputPlaceholder: 'Enter a URL pattern (supports regex)',
+            addButton: 'Add',
+            noPatterns: 'No patterns configured',
+            examples: 'Examples: .*\\.google\\.com, https://mail\\..*',
+            invalidRegex: 'Invalid regular expression pattern',
+            patternAdded: 'Pattern added successfully',
+            patternRemoved: 'Pattern removed successfully',
+            duplicatePattern: 'This pattern already exists'
+          },
+
           // Privacy
           privacy: {
             dataCollection: 'Data Collection',

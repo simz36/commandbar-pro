@@ -13,6 +13,7 @@ let lastInputLength = 0;
 let isDeletingTimeout = null;
 let isInDeletionMode = false;
 let isAutocompletingFromTyping = false;
+let isSiteExcluded = false; // Flag for excluded websites
 
 // Función para tracking de uso local (envía al background script)
 async function trackUsageLocal(action, details = {}) {
@@ -25,6 +26,18 @@ async function trackUsageLocal(action, details = {}) {
   } catch (error) {
     // Ignorar errores de tracking para no interrumpir funcionalidad
   }
+}
+
+// Check if URL matches any excluded pattern
+function isUrlExcluded(url, patterns) {
+  if (!patterns || patterns.length === 0) return false;
+  return patterns.some(pattern => {
+    try {
+      return new RegExp(pattern).test(url);
+    } catch (e) {
+      return false;
+    }
+  });
 }
 
 // Configuración de usuario (ya declarada arriba)
@@ -40,7 +53,7 @@ userSettings = {
 // Función para cargar configuración
 async function loadUserSettings() {
   try {
-    const settings = await chrome.storage.sync.get(['defaultSearchEngine', 'searchTabs', 'searchBookmarks', 'searchHistory', 'maxResults', 'searchDelay', 'language', 'shortcutToggleCommandbar', 'shortcutEditCurrentUrl']);
+    const settings = await chrome.storage.sync.get(['defaultSearchEngine', 'searchTabs', 'searchBookmarks', 'searchHistory', 'maxResults', 'searchDelay', 'language', 'shortcutToggleCommandbar', 'shortcutEditCurrentUrl', 'excludedWebsites']);
     userSettings.defaultSearchEngine = settings.defaultSearchEngine || 'google';
     userSettings.searchTabs = settings.searchTabs !== false; // Por defecto true
     userSettings.searchBookmarks = settings.searchBookmarks !== false; // Por defecto true
@@ -50,7 +63,11 @@ async function loadUserSettings() {
     userSettings.shortcutToggleCommandbar = settings.shortcutToggleCommandbar || null;
     userSettings.shortcutEditCurrentUrl = settings.shortcutEditCurrentUrl || null;
     userSettings.language = settings.language || 'es';
-    
+    userSettings.excludedWebsites = settings.excludedWebsites || [];
+
+    // Check if current site is excluded
+    isSiteExcluded = isUrlExcluded(window.location.href, userSettings.excludedWebsites);
+
     // Sincronizar idioma con i18n
     if (typeof i18n !== 'undefined' && i18n && typeof i18n.setLanguage === 'function') {
       await i18n.setLanguage(userSettings.language);
@@ -1374,7 +1391,8 @@ async function getCurrentTabId() {
 
 // Mostrar Command Bar
 function showCommandBar(prefillUrl = null) {
-  
+  if (isSiteExcluded) return;
+
   if (!commandBarContainer) {
     createCommandBar();
   }
@@ -1593,8 +1611,10 @@ function showIntegratedSuggestions(favicon, title, url) {
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   
   if (message.action === 'toggle_commandbar') {
+    if (isSiteExcluded) return;
     toggleCommandBar();
   } else if (message.action === 'edit_current_url') {
+    if (isSiteExcluded) return;
     // Convertir URL completa a formato simple para edición
     let cleanUrl = message.currentUrl;
     try {
@@ -1631,6 +1651,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }
       if (message.settings.shortcutEditCurrentUrl !== undefined) {
         userSettings.shortcutEditCurrentUrl = message.settings.shortcutEditCurrentUrl;
+      }
+      if (message.settings.excludedWebsites !== undefined) {
+        userSettings.excludedWebsites = message.settings.excludedWebsites;
+        isSiteExcluded = isUrlExcluded(window.location.href, userSettings.excludedWebsites);
+        // If site became excluded while CommandBar is visible, hide it
+        if (isSiteExcluded && isCommandBarVisible) {
+          hideCommandBar();
+        }
       }
     }
     
@@ -1669,6 +1697,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
 // Intercept keyboard shortcuts for CommandBar
 document.addEventListener('keydown', (e) => {
+  // Release all shortcuts when site is excluded
+  if (isSiteExcluded) return;
+
   const toggleShortcut = userSettings.shortcutToggleCommandbar || getDefaultShortcut('toggle_commandbar');
   const editShortcut = userSettings.shortcutEditCurrentUrl || getDefaultShortcut('edit_current_url');
 

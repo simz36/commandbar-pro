@@ -1,3 +1,15 @@
+// Check if URL matches any excluded pattern
+function isUrlExcluded(url, patterns) {
+  if (!patterns || patterns.length === 0) return false;
+  return patterns.some(pattern => {
+    try {
+      return new RegExp(pattern).test(url);
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
 // Service Worker para CommandBar Pro
 chrome.runtime.onInstalled.addListener((details) => {
   // Abrir página de opciones al instalar
@@ -108,6 +120,12 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
     // Verificar que la pestaña sea accesible
     const tab = await chrome.tabs.get(tabId);
     
+    // Check if URL is in excluded websites list
+    const { excludedWebsites } = await chrome.storage.sync.get(['excludedWebsites']);
+    if (tab.url && isUrlExcluded(tab.url, excludedWebsites)) {
+      return false;
+    }
+
     // NUEVA LÓGICA: Permitir inyección en nuestras páginas de extensión
     const isOurExtensionPage = tab.url?.includes(chrome.runtime.id) && tab.url?.includes('new_tab.html');
     
@@ -345,11 +363,15 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
 // Escuchar comandos de teclado
 chrome.commands.onCommand.addListener(async (command) => {
   // Check if user has customized shortcuts - if so, content script handles it
-  const { shortcutToggleCommandbar, shortcutEditCurrentUrl } =
-    await chrome.storage.sync.get(['shortcutToggleCommandbar', 'shortcutEditCurrentUrl']);
+  const { shortcutToggleCommandbar, shortcutEditCurrentUrl, excludedWebsites } =
+    await chrome.storage.sync.get(['shortcutToggleCommandbar', 'shortcutEditCurrentUrl', 'excludedWebsites']);
 
   if (command === 'toggle_commandbar' && shortcutToggleCommandbar) return;
   if (command === 'edit_current_url' && shortcutEditCurrentUrl) return;
+
+  // Check if current tab URL is excluded
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (activeTab?.url && isUrlExcluded(activeTab.url, excludedWebsites)) return;
 
   // Trackear uso de comandos
   await trackUsage('keyboard_command', { command: command });

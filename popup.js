@@ -44,22 +44,46 @@ function initializePopup() {
 }
 
 // Actualizar atajos de teclado según la plataforma
-function updateKeyboardShortcuts() {
+async function updateKeyboardShortcuts() {
   const isMac = isMacOS();
   const modifierKey = isMac ? 'Cmd' : 'Ctrl';
   const shortcutDisplays = document.querySelectorAll('.shortcut-display');
-  
+
+  // Load custom shortcuts
+  let toggleShortcut = null;
+  let editShortcut = null;
+  try {
+    const stored = await chrome.storage.sync.get(['shortcutToggleCommandbar', 'shortcutEditCurrentUrl']);
+    toggleShortcut = stored.shortcutToggleCommandbar;
+    editShortcut = stored.shortcutEditCurrentUrl;
+  } catch (e) { /* ignore */ }
+
+  // Format shortcut for display
+  function formatShortcut(str) {
+    if (!str) return null;
+    return str.split('+').map(p => {
+      if (p === 'Meta') return isMac ? 'Cmd' : 'Meta';
+      return p;
+    }).map(p => `<kbd class="key">${p}</kbd>`).join(' + ');
+  }
+
   if (shortcutDisplays.length >= 1) {
+    const toggleDisplay = toggleShortcut
+      ? formatShortcut(toggleShortcut)
+      : `<kbd class="key">${modifierKey}</kbd> + <kbd class="key">K</kbd>`;
     shortcutDisplays[0].innerHTML = `
-      <kbd class="key">${modifierKey}</kbd> + <kbd class="key">K</kbd>
+      ${toggleDisplay}
       <span class="shortcut-desc" id="popup-open-commandbar">Abrir Command Bar</span>
     `;
   }
-  
+
   if (shortcutDisplays.length >= 2) {
+    const editDisplay = editShortcut
+      ? formatShortcut(editShortcut)
+      : `<kbd class="key">${modifierKey}</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>`;
     shortcutDisplays[1].innerHTML = `
-      <kbd class="key">${modifierKey}</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">I</kbd>
-      <span class="shortcut-desc" id="popup-developer-mode">Modo desarrollador</span>
+      ${editDisplay}
+      <span class="shortcut-desc" id="popup-edit-current-url">Editar URL actual</span>
     `;
   }
 }

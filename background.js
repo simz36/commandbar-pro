@@ -344,6 +344,13 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
 
 // Escuchar comandos de teclado
 chrome.commands.onCommand.addListener(async (command) => {
+  // Check if user has customized shortcuts - if so, content script handles it
+  const { shortcutToggleCommandbar, shortcutEditCurrentUrl } =
+    await chrome.storage.sync.get(['shortcutToggleCommandbar', 'shortcutEditCurrentUrl']);
+
+  if (command === 'toggle_commandbar' && shortcutToggleCommandbar) return;
+  if (command === 'edit_current_url' && shortcutEditCurrentUrl) return;
+
   // Trackear uso de comandos
   await trackUsage('keyboard_command', { command: command });
   

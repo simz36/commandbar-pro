@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', async function() {
        
        // Paso 4: Inicializar sección de cache ULTRA
        initializeCacheSection();
+
+       // Paso 4b: Inicializar shortcut recorders
+       initShortcutRecorders();
       
       // Paso 4: Actualizar interfaz con traducciones (con delay adicional)
       setTimeout(() => {
@@ -118,7 +121,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Funciones experimentales (desactivadas por defecto)
     autoOpenNewTab: false,
-    autoOpenDelay: 100
+    autoOpenDelay: 100,
+
+    // Custom keyboard shortcuts (null = use manifest default)
+    shortcutToggleCommandbar: null,
+    shortcutEditCurrentUrl: null
   };
   
   let currentSettings = { ...defaultSettings };
@@ -177,23 +184,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   // Actualizar atajos de teclado según la plataforma
   function updateKeyboardShortcuts() {
-    const isMac = isMacOS();
-    const modifierKey = isMac ? 'Cmd' : 'Ctrl';
-    
-    // Actualizar atajos principales
-    const shortcutDisplays = document.querySelectorAll('.shortcut-display');
-    if (shortcutDisplays.length >= 1) {
-      shortcutDisplays[0].innerHTML = `
-        <kbd class="key">${modifierKey}</kbd> + <kbd class="key">K</kbd>
-        <span class="shortcut-note">Abrir Command Bar</span>
-      `;
-    }
-    
-    if (shortcutDisplays.length >= 2) {
-      shortcutDisplays[1].innerHTML = `
-        <kbd class="key">${modifierKey}</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>
-        <span class="shortcut-note">Editar URL actual</span>
-      `;
+    // Shortcut displays are now handled by updateShortcutDisplays()
+    if (typeof updateShortcutDisplays === 'function') {
+      updateShortcutDisplays();
     }
   }
   
@@ -279,8 +272,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         element.checked = currentSettings[settingKey];
       }
     });
+
+    // Update shortcut recorder displays
+    updateShortcutDisplays();
   }
-  
+
   // Configurar event listeners
   function setupEventListeners() {
     // Botón guardar
@@ -413,7 +409,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       'store-usage-stats': 'storeUsageStats',
       'language-select': 'language',
       'auto-open-new-tab': 'autoOpenNewTab',
-      'auto-open-delay': 'autoOpenDelay'
+      'auto-open-delay': 'autoOpenDelay',
+      'shortcut-input-toggle': 'shortcutToggleCommandbar',
+      'shortcut-input-edit': 'shortcutEditCurrentUrl'
     };
     
     return mappings[elementId];
@@ -578,6 +576,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateElementText('additional-config-label', 'options.keyboard.additionalConfig', {}, i18nInstance);
     updateElementText('additional-config-desc', 'options.keyboard.additionalConfigDesc', {}, i18nInstance);
     updateElementText('prevent-site-shortcuts-label', 'options.keyboard.preventSiteShortcuts', {}, i18nInstance);
+    updateElementText('open-commandbar-shortcut', 'options.keyboard.openCommandBar', {}, i18nInstance);
+    updateElementText('edit-url-shortcut', 'options.keyboard.editCurrentUrl', {}, i18nInstance);
+    updateElementText('shortcut-change-toggle', 'options.keyboard.changeShortcut', {}, i18nInstance);
+    updateElementText('shortcut-change-edit', 'options.keyboard.changeShortcut', {}, i18nInstance);
+    updateElementText('shortcut-reset-toggle', 'options.keyboard.resetShortcut', {}, i18nInstance);
+    updateElementText('shortcut-reset-edit', 'options.keyboard.resetShortcut', {}, i18nInstance);
     
     // Privacidad y Datos
     updateElementText('privacy-title', 'options.privacyAndData', {}, i18nInstance);
@@ -699,7 +703,9 @@ document.addEventListener('DOMContentLoaded', async function() {
               maxResults: currentSettings.maxResults,
               searchDelay: currentSettings.searchDelay,
               autoOpenNewTab: currentSettings.autoOpenNewTab,
-              autoOpenDelay: currentSettings.autoOpenDelay
+              autoOpenDelay: currentSettings.autoOpenDelay,
+              shortcutToggleCommandbar: currentSettings.shortcutToggleCommandbar,
+              shortcutEditCurrentUrl: currentSettings.shortcutEditCurrentUrl
             }
           }).catch(() => {
             // Ignorar errores de pestañas que no pueden recibir mensajes
@@ -1451,4 +1457,283 @@ document.addEventListener('DOMContentLoaded', async function() {
          content.innerHTML = '<div style="text-align: center; padding: 2rem; color: #dc3545;">Error cargando estadísticas</div>';
        }
      }
-   } 
+   }
+
+   // ===== CUSTOM KEYBOARD SHORTCUTS =====
+
+   // Reserved browser shortcuts that cannot be overridden
+   const RESERVED_SHORTCUTS = [
+     'Ctrl+T', 'Ctrl+W', 'Ctrl+N', 'Ctrl+Tab', 'Ctrl+Shift+T', 'Ctrl+Q',
+     'Ctrl+L', 'Ctrl+D', 'Ctrl+H', 'Ctrl+J', 'Ctrl+P', 'Ctrl+S',
+     'Ctrl+Shift+N', 'Ctrl+Shift+Tab', 'Ctrl+F4', 'Ctrl+Shift+Q',
+     'Meta+T', 'Meta+W', 'Meta+N', 'Meta+Tab', 'Meta+Shift+T', 'Meta+Q',
+     'Meta+L', 'Meta+D', 'Meta+H', 'Meta+J', 'Meta+P', 'Meta+S',
+     'Meta+Shift+N'
+   ];
+
+   // Parse a KeyboardEvent into a normalized shortcut string
+   function parseKeyEventToShortcut(e) {
+     const modifiers = [];
+     if (e.ctrlKey) modifiers.push('Ctrl');
+     if (e.altKey) modifiers.push('Alt');
+     if (e.shiftKey) modifiers.push('Shift');
+     if (e.metaKey) modifiers.push('Meta');
+
+     const key = e.key;
+     if (['Control', 'Alt', 'Shift', 'Meta'].includes(key)) {
+       return null; // Only modifiers pressed
+     }
+
+     const normalizedKey = key.length === 1 ? key.toUpperCase() : key;
+     return [...modifiers, normalizedKey].join('+');
+   }
+
+   // Get platform-aware default shortcut
+   function getDefaultShortcut(commandId) {
+     const mod = isMacOS() ? 'Meta' : 'Ctrl';
+     switch (commandId) {
+       case 'toggle': return `${mod}+K`;
+       case 'edit': return `${mod}+Shift+K`;
+       default: return null;
+     }
+   }
+
+   // Get the setting key for a command ID
+   function getShortcutSettingKey(commandId) {
+     return commandId === 'toggle' ? 'shortcutToggleCommandbar' : 'shortcutEditCurrentUrl';
+   }
+
+   // Get the other command's ID
+   function getOtherCommandId(commandId) {
+     return commandId === 'toggle' ? 'edit' : 'toggle';
+   }
+
+   // Validate a shortcut string
+   function validateShortcut(shortcutStr) {
+     if (!shortcutStr) return { valid: false, error: 'empty' };
+
+     const parts = shortcutStr.split('+');
+     if (parts.length < 2) return { valid: false, error: 'invalid' };
+
+     const key = parts[parts.length - 1];
+     const modifiers = parts.slice(0, -1);
+
+     // Must have at least one modifier
+     const validModifiers = ['Ctrl', 'Alt', 'Shift', 'Meta'];
+     const hasModifier = modifiers.some(m => validModifiers.includes(m));
+     if (!hasModifier) return { valid: false, error: 'invalid' };
+
+     // Key must be a single character or named key (not a modifier)
+     if (validModifiers.includes(key)) return { valid: false, error: 'invalid' };
+
+     // Check reserved shortcuts
+     if (RESERVED_SHORTCUTS.includes(shortcutStr)) {
+       return { valid: false, error: 'reserved' };
+     }
+
+     return { valid: true };
+   }
+
+   // Check conflict with the other shortcut
+   function checkShortcutConflict(commandId, shortcutStr) {
+     const otherCommandId = getOtherCommandId(commandId);
+     const otherSettingKey = getShortcutSettingKey(otherCommandId);
+     const otherShortcut = currentSettings[otherSettingKey] || getDefaultShortcut(otherCommandId);
+     return otherShortcut === shortcutStr;
+   }
+
+   // Format a shortcut string into <kbd> HTML
+   function formatShortcutDisplay(shortcutStr) {
+     if (!shortcutStr) return '';
+     const parts = shortcutStr.split('+');
+     // On Mac, display Meta as Cmd
+     const displayParts = parts.map(p => {
+       if (p === 'Meta') return isMacOS() ? 'Cmd' : 'Meta';
+       return p;
+     });
+     return displayParts.map(p => `<kbd class="key">${p}</kbd>`).join(' + ');
+   }
+
+   // Active recording state
+   let activeRecordingCommandId = null;
+   let recordingKeydownHandler = null;
+
+   // Initialize shortcut recorders
+   function initShortcutRecorders() {
+     ['toggle', 'edit'].forEach(commandId => {
+       const changeBtn = document.getElementById(`shortcut-change-${commandId}`);
+       const resetBtn = document.getElementById(`shortcut-reset-${commandId}`);
+       const inputEl = document.getElementById(`shortcut-input-${commandId}`);
+
+       if (changeBtn) {
+         changeBtn.addEventListener('click', () => startRecording(commandId));
+       }
+       if (resetBtn) {
+         resetBtn.addEventListener('click', () => resetShortcut(commandId));
+       }
+       if (inputEl) {
+         inputEl.addEventListener('click', () => startRecording(commandId));
+       }
+     });
+
+     // Apply current settings to the recorder displays
+     updateShortcutDisplays();
+   }
+
+   // Update all shortcut displays based on current settings
+   function updateShortcutDisplays() {
+     ['toggle', 'edit'].forEach(commandId => {
+       const settingKey = getShortcutSettingKey(commandId);
+       const customShortcut = currentSettings[settingKey];
+       const displayShortcut = customShortcut || getDefaultShortcut(commandId);
+
+       const keysEl = document.getElementById(`shortcut-keys-${commandId}`);
+       const resetBtn = document.getElementById(`shortcut-reset-${commandId}`);
+
+       if (keysEl) {
+         keysEl.innerHTML = formatShortcutDisplay(displayShortcut);
+       }
+       if (resetBtn) {
+         resetBtn.style.display = customShortcut ? 'inline-block' : 'none';
+       }
+     });
+   }
+
+   // Start recording a shortcut
+   function startRecording(commandId) {
+     // Cancel any existing recording
+     if (activeRecordingCommandId) {
+       cancelRecording();
+     }
+
+     activeRecordingCommandId = commandId;
+
+     const inputEl = document.getElementById(`shortcut-input-${commandId}`);
+     const keysEl = document.getElementById(`shortcut-keys-${commandId}`);
+     const recordingEl = document.getElementById(`shortcut-recording-${commandId}`);
+     const changeBtn = document.getElementById(`shortcut-change-${commandId}`);
+
+     if (inputEl) inputEl.classList.add('recording');
+     if (keysEl) keysEl.style.display = 'none';
+     if (recordingEl) {
+       const i18nInstance = window.i18n || i18n;
+       recordingEl.textContent = i18nInstance.t('options.keyboard.recordingPrompt');
+       recordingEl.style.display = 'inline';
+     }
+     if (changeBtn) changeBtn.style.display = 'none';
+
+     // Add keydown listener
+     recordingKeydownHandler = function(e) {
+       e.preventDefault();
+       e.stopPropagation();
+
+       if (e.key === 'Escape') {
+         cancelRecording();
+         return;
+       }
+
+       const shortcutStr = parseKeyEventToShortcut(e);
+       if (!shortcutStr) return; // Only modifiers pressed, wait for more
+
+       // Validate
+       const validation = validateShortcut(shortcutStr);
+       if (!validation.valid) {
+         const i18nInstance = window.i18n || i18n;
+         if (validation.error === 'reserved') {
+           showToast(i18nInstance.t('options.keyboard.shortcutReserved'), 'warning');
+         } else {
+           showToast(i18nInstance.t('options.keyboard.shortcutInvalid'), 'warning');
+         }
+         return;
+       }
+
+       // Check conflict
+       if (checkShortcutConflict(commandId, shortcutStr)) {
+         const i18nInstance = window.i18n || i18n;
+         showToast(i18nInstance.t('options.keyboard.shortcutConflict'), 'warning');
+         return;
+       }
+
+       // Save the shortcut
+       stopRecording(commandId, shortcutStr);
+     };
+
+     document.addEventListener('keydown', recordingKeydownHandler, true);
+
+     // Click outside to cancel
+     setTimeout(() => {
+       document.addEventListener('click', handleRecordingClickOutside, true);
+     }, 100);
+   }
+
+   // Handle click outside to cancel recording
+   function handleRecordingClickOutside(e) {
+     if (!activeRecordingCommandId) return;
+     const inputEl = document.getElementById(`shortcut-input-${activeRecordingCommandId}`);
+     const changeBtn = document.getElementById(`shortcut-change-${activeRecordingCommandId}`);
+     if (inputEl && !inputEl.contains(e.target) && changeBtn && !changeBtn.contains(e.target)) {
+       cancelRecording();
+     }
+   }
+
+   // Cancel recording without saving
+   function cancelRecording() {
+     if (!activeRecordingCommandId) return;
+
+     const commandId = activeRecordingCommandId;
+     cleanupRecording(commandId);
+     updateShortcutDisplays();
+   }
+
+   // Stop recording and save the shortcut
+   async function stopRecording(commandId, shortcutStr) {
+     cleanupRecording(commandId);
+
+     const settingKey = getShortcutSettingKey(commandId);
+     const defaultShortcut = getDefaultShortcut(commandId);
+
+     // If the shortcut is the same as the default, store null
+     if (shortcutStr === defaultShortcut) {
+       currentSettings[settingKey] = null;
+     } else {
+       currentSettings[settingKey] = shortcutStr;
+     }
+
+     updateShortcutDisplays();
+     await saveSettings(false);
+
+     const i18nInstance = window.i18n || i18n;
+     showToast(i18nInstance.t('options.keyboard.shortcutSaved'), 'success');
+   }
+
+   // Reset shortcut to default
+   async function resetShortcut(commandId) {
+     const settingKey = getShortcutSettingKey(commandId);
+     currentSettings[settingKey] = null;
+     updateShortcutDisplays();
+     await saveSettings(false);
+
+     const i18nInstance = window.i18n || i18n;
+     showToast(i18nInstance.t('options.keyboard.shortcutReset'), 'success');
+   }
+
+   // Clean up recording state
+   function cleanupRecording(commandId) {
+     if (recordingKeydownHandler) {
+       document.removeEventListener('keydown', recordingKeydownHandler, true);
+       recordingKeydownHandler = null;
+     }
+     document.removeEventListener('click', handleRecordingClickOutside, true);
+
+     const inputEl = document.getElementById(`shortcut-input-${commandId}`);
+     const keysEl = document.getElementById(`shortcut-keys-${commandId}`);
+     const recordingEl = document.getElementById(`shortcut-recording-${commandId}`);
+     const changeBtn = document.getElementById(`shortcut-change-${commandId}`);
+
+     if (inputEl) inputEl.classList.remove('recording');
+     if (keysEl) keysEl.style.display = 'inline';
+     if (recordingEl) recordingEl.style.display = 'none';
+     if (changeBtn) changeBtn.style.display = 'inline-block';
+
+     activeRecordingCommandId = null;
+   }

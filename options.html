@@ -161,14 +161,30 @@
                 <label class="option-label" id="main-shortcuts-label">Atajos Principales</label>
                 <p class="option-description" id="main-shortcuts-desc">Combinaciones de teclado para CommandBar</p>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="shortcut-display">
-                  <kbd class="key">Ctrl</kbd> + <kbd class="key">K</kbd>
-                  <span class="shortcut-note" id="open-commandbar-shortcut">Abrir Command Bar</span>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Toggle CommandBar shortcut -->
+                <div class="shortcut-recorder" data-command="toggle">
+                  <span class="shortcut-label" id="open-commandbar-shortcut">Abrir Command Bar</span>
+                  <div class="shortcut-recorder-input" id="shortcut-input-toggle" tabindex="0" role="button">
+                    <span class="shortcut-keys" id="shortcut-keys-toggle">
+                      <kbd class="key">Ctrl</kbd> + <kbd class="key">K</kbd>
+                    </span>
+                    <span class="shortcut-recording-text" id="shortcut-recording-toggle" style="display:none;">Presiona tu atajo...</span>
+                  </div>
+                  <button class="shortcut-change-btn" id="shortcut-change-toggle" type="button">Cambiar</button>
+                  <button class="shortcut-reset-btn" id="shortcut-reset-toggle" type="button" style="display:none;">Restablecer</button>
                 </div>
-                <div class="shortcut-display">
-                  <kbd class="key">Ctrl</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>
-                  <span class="shortcut-note" id="edit-url-shortcut">Editar URL actual</span>
+                <!-- Edit URL shortcut -->
+                <div class="shortcut-recorder" data-command="edit">
+                  <span class="shortcut-label" id="edit-url-shortcut">Editar URL actual</span>
+                  <div class="shortcut-recorder-input" id="shortcut-input-edit" tabindex="0" role="button">
+                    <span class="shortcut-keys" id="shortcut-keys-edit">
+                      <kbd class="key">Ctrl</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>
+                    </span>
+                    <span class="shortcut-recording-text" id="shortcut-recording-edit" style="display:none;">Presiona tu atajo...</span>
+                  </div>
+                  <button class="shortcut-change-btn" id="shortcut-change-edit" type="button">Cambiar</button>
+                  <button class="shortcut-reset-btn" id="shortcut-reset-edit" type="button" style="display:none;">Restablecer</button>
                 </div>
               </div>
             </div>

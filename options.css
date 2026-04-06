@@ -330,6 +330,95 @@ body {
   font-style: italic;
 }
 
+/* Shortcut Recorder */
+.shortcut-recorder {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.shortcut-label {
+  font-size: 0.85rem;
+  color: #495057;
+  min-width: 140px;
+  font-weight: 500;
+}
+
+.shortcut-recorder-input {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.shortcut-recorder-input:hover {
+  border-color: #adb5bd;
+  background: #fff;
+}
+
+.shortcut-recorder-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.shortcut-recorder-input.recording {
+  border-color: #667eea;
+  background: #f0f0ff;
+  animation: recording-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+  50% { border-color: #764ba2; box-shadow: 0 0 0 5px rgba(118, 75, 162, 0.2); }
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.shortcut-recording-text {
+  font-size: 0.85rem;
+  color: #667eea;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.shortcut-change-btn,
+.shortcut-reset-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #fff;
+  color: #495057;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.shortcut-change-btn:hover {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+
+.shortcut-reset-btn:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
 /* Buttons */
 .button-group {
   display: flex;

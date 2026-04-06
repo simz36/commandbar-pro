@@ -283,10 +283,20 @@ class I18n {
             mainShortcuts: 'Atajos Principales',
             mainShortcutsDesc: 'Combinaciones de teclado para CommandBar',
             openCommandBar: 'Abrir Command Bar',
+            editCurrentUrl: 'Editar URL actual',
             developerMode: 'Modo desarrollador',
             additionalConfig: 'Configuración Adicional',
             additionalConfigDesc: 'Personaliza el comportamiento de los atajos',
-            preventSiteShortcuts: 'Prevenir atajos del sitio web'
+            preventSiteShortcuts: 'Prevenir atajos del sitio web',
+            changeShortcut: 'Cambiar',
+            resetShortcut: 'Restablecer',
+            recordingPrompt: 'Presiona tu atajo...',
+            pressEscapeToCancel: 'Presiona Escape para cancelar',
+            shortcutSaved: 'Atajo guardado correctamente',
+            shortcutReset: 'Atajo restablecido al valor por defecto',
+            shortcutConflict: 'Este atajo ya está asignado a otra acción',
+            shortcutInvalid: 'Se requiere al menos una tecla modificadora y una tecla regular',
+            shortcutReserved: 'Este atajo está reservado por el navegador'
           },
           
           // Privacidad
@@ -709,10 +719,20 @@ class I18n {
             mainShortcuts: 'Main Shortcuts',
             mainShortcutsDesc: 'Keyboard combinations for CommandBar',
             openCommandBar: 'Open Command Bar',
+            editCurrentUrl: 'Edit current URL',
             developerMode: 'Developer mode',
             additionalConfig: 'Additional Configuration',
             additionalConfigDesc: 'Customize shortcut behavior',
-            preventSiteShortcuts: 'Prevent website shortcuts'
+            preventSiteShortcuts: 'Prevent website shortcuts',
+            changeShortcut: 'Change',
+            resetShortcut: 'Reset',
+            recordingPrompt: 'Press your shortcut...',
+            pressEscapeToCancel: 'Press Escape to cancel',
+            shortcutSaved: 'Shortcut saved successfully',
+            shortcutReset: 'Shortcut reset to default',
+            shortcutConflict: 'This shortcut is already assigned to another action',
+            shortcutInvalid: 'At least one modifier key and a regular key are required',
+            shortcutReserved: 'This shortcut is reserved by the browser'
           },
           
           // Privacy

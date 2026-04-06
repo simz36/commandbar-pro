@@ -40,13 +40,15 @@ userSettings = {
 // Función para cargar configuración
 async function loadUserSettings() {
   try {
-    const settings = await chrome.storage.sync.get(['defaultSearchEngine', 'searchTabs', 'searchBookmarks', 'searchHistory', 'maxResults', 'searchDelay', 'language']);
+    const settings = await chrome.storage.sync.get(['defaultSearchEngine', 'searchTabs', 'searchBookmarks', 'searchHistory', 'maxResults', 'searchDelay', 'language', 'shortcutToggleCommandbar', 'shortcutEditCurrentUrl']);
     userSettings.defaultSearchEngine = settings.defaultSearchEngine || 'google';
     userSettings.searchTabs = settings.searchTabs !== false; // Por defecto true
     userSettings.searchBookmarks = settings.searchBookmarks !== false; // Por defecto true
     userSettings.searchHistory = settings.searchHistory !== false; // Por defecto true
     userSettings.maxResults = settings.maxResults || 5;
     userSettings.searchDelay = settings.searchDelay || 50;
+    userSettings.shortcutToggleCommandbar = settings.shortcutToggleCommandbar || null;
+    userSettings.shortcutEditCurrentUrl = settings.shortcutEditCurrentUrl || null;
     userSettings.language = settings.language || 'es';
     
     // Sincronizar idioma con i18n
@@ -93,6 +95,48 @@ function isMacOS() {
 // Obtener tecla modificadora según la plataforma
 function getModifierKey() {
   return isMacOS() ? 'Cmd' : 'Ctrl';
+}
+
+// Get platform-aware default shortcut for a command
+function getDefaultShortcut(commandId) {
+  const mod = isMacOS() ? 'Meta' : 'Ctrl';
+  switch (commandId) {
+    case 'toggle_commandbar': return `${mod}+K`;
+    case 'edit_current_url': return `${mod}+Shift+K`;
+    default: return null;
+  }
+}
+
+// Check if a KeyboardEvent matches a shortcut string
+function eventMatchesShortcut(e, shortcutStr) {
+  if (!shortcutStr) return false;
+  const parts = shortcutStr.split('+');
+  const key = parts[parts.length - 1];
+  const modifiers = parts.slice(0, -1);
+
+  const needsCtrl = modifiers.includes('Ctrl');
+  const needsAlt = modifiers.includes('Alt');
+  const needsShift = modifiers.includes('Shift');
+  const needsMeta = modifiers.includes('Meta');
+
+  // On Mac, Ctrl and Meta are interchangeable for shortcut matching
+  const isMac = isMacOS();
+  if (needsCtrl || needsMeta) {
+    const hasCtrlOrMeta = isMac ? (e.metaKey || e.ctrlKey) : e.ctrlKey;
+    if (!hasCtrlOrMeta) return false;
+  }
+  if (needsAlt && !e.altKey) return false;
+  if (needsShift && !e.shiftKey) return false;
+
+  // Ensure no extra modifiers are pressed
+  if (!needsCtrl && !needsMeta) {
+    if (isMac ? (e.metaKey || e.ctrlKey) : e.ctrlKey) return false;
+  }
+  if (!needsAlt && e.altKey) return false;
+  if (!needsShift && e.shiftKey) return false;
+
+  const pressedKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  return pressedKey === key;
 }
 
 // Crear la estructura de la Command Bar
@@ -1582,6 +1626,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       if (message.settings.searchDelay !== undefined) {
         userSettings.searchDelay = message.settings.searchDelay;
       }
+      if (message.settings.shortcutToggleCommandbar !== undefined) {
+        userSettings.shortcutToggleCommandbar = message.settings.shortcutToggleCommandbar;
+      }
+      if (message.settings.shortcutEditCurrentUrl !== undefined) {
+        userSettings.shortcutEditCurrentUrl = message.settings.shortcutEditCurrentUrl;
+      }
     }
     
     // Actualizar configuración del idioma
@@ -1617,12 +1667,21 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 });
 
-// Prevenir que el sitio capture Cmd+K / Ctrl+K
+// Intercept keyboard shortcuts for CommandBar
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+  const toggleShortcut = userSettings.shortcutToggleCommandbar || getDefaultShortcut('toggle_commandbar');
+  const editShortcut = userSettings.shortcutEditCurrentUrl || getDefaultShortcut('edit_current_url');
+
+  if (eventMatchesShortcut(e, toggleShortcut)) {
     e.preventDefault();
     e.stopPropagation();
-    // No llamamos showCommandBar() aquí porque ya lo maneja el background script
+    toggleCommandBar();
+  } else if (eventMatchesShortcut(e, editShortcut)) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cleanUrl = window.location.hostname.replace('www.', '') +
+      (window.location.pathname !== '/' ? window.location.pathname : '') + window.location.search;
+    showCommandBar(cleanUrl);
   }
 }, true);
 

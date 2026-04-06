@@ -569,7 +569,22 @@ async function searchHistory(query, sendResponse) {
       text: query,
       maxResults: 20
     });
-    sendResponse({ success: true, history });
+    const historyWithFavicons = await Promise.all(history.map(async item => {
+      const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(item.url)}&size=32`;
+      try {
+        const response = await fetch(faviconUrl);
+        const blob = await response.blob();
+        const dataUrl = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+        return { ...item, favicon: dataUrl };
+      } catch {
+        return { ...item, favicon: '' };
+      }
+    }));
+    sendResponse({ success: true, history: historyWithFavicons });
   } catch (error) {
     sendResponse({ success: false, error: error.message });
   }

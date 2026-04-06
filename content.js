@@ -944,11 +944,12 @@ function appendHistoryResults(history) {
   
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.history')}</div>`;
   history.slice(0, userSettings.maxResults).forEach(item => {
+    const hostname = new URL(item.url).hostname;
     html += `
       <div class="commandbar-item" data-action="open-history" data-url="${item.url}">
-        <span class="commandbar-icon">📚</span>
+        <img class="commandbar-favicon" src="${item.favicon}" alt="" onerror="this.style.display='none'">
         <span class="commandbar-text">${item.title}</span>
-        <span class="commandbar-url">${new URL(item.url).hostname}</span>
+        <span class="commandbar-url">${hostname}</span>
       </div>
     `;
   });

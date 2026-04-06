@@ -567,9 +567,15 @@ async function searchHistory(query, sendResponse) {
   try {
     const history = await chrome.history.search({
       text: query,
-      maxResults: 20
+      maxResults: 50
     });
-    const historyWithFavicons = await Promise.all(history.map(async item => {
+    const seen = new Set();
+    const deduped = history.filter(item => {
+      if (seen.has(item.title)) return false;
+      seen.add(item.title);
+      return true;
+    }).slice(0, 20);
+    const historyWithFavicons = await Promise.all(deduped.map(async item => {
       const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(item.url)}&size=32`;
       try {
         const response = await fetch(faviconUrl);

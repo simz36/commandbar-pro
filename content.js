@@ -1704,7 +1704,11 @@ document.addEventListener('keydown', (e) => {
   const toggleShortcut = userSettings.shortcutToggleCommandbar || getDefaultShortcut('toggle_commandbar');
   const editShortcut = userSettings.shortcutEditCurrentUrl || getDefaultShortcut('edit_current_url');
 
-  if (eventMatchesShortcut(e, toggleShortcut)) {
+  if (e.key === 'Escape' && isCommandBarVisible) {
+    e.preventDefault();
+    e.stopPropagation();
+    hideCommandBar();
+  } else if (eventMatchesShortcut(e, toggleShortcut)) {
     e.preventDefault();
     e.stopPropagation();
     toggleCommandBar();

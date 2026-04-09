@@ -7,6 +7,7 @@ let isInitialized = false; // Flag para evitar inicialización duplicada
 // Variables globales
 let userSettings = {};
 let searchTimeout = null;
+let searchGeneration = 0;
 let autocompleteTimeout = null;
 let isDeleting = false;
 let lastInputLength = 0;
@@ -520,7 +521,19 @@ function cleanAutocompleteCache() {
 function handleKeyDown(e) {
   const suggestions = document.querySelectorAll('.commandbar-item');
   const selected = document.querySelector('.commandbar-item.selected');
-  
+
+  // Handle Cmd/Ctrl+1..9 to select items by number
+  const modifierPressed = isMacOS() ? e.metaKey : e.ctrlKey;
+  if (modifierPressed && e.key >= '1' && e.key <= '9') {
+    const index = parseInt(e.key) - 1;
+    const items = document.querySelectorAll('#commandbar-suggestions .commandbar-item');
+    if (index < items.length) {
+      e.preventDefault();
+      executeAction(items[index]);
+    }
+    return;
+  }
+
   switch (e.key) {
     case 'Escape':
       hideCommandBar();
@@ -751,32 +764,39 @@ async function showSearchSuggestions(query) {
   
   // Limpiar sugerencias anteriores
   suggestionsContainer.innerHTML = '';
-  
+
   let hasResults = false;
-  
+  const currentGeneration = ++searchGeneration;
+
   try {
     // Determinar qué fuentes buscar basado en configuración
     const searchPromises = [];
-    
+
     if (userSettings.searchTabs) {
       searchPromises.push(searchInTabs(query));
     }
-    
+
     if (userSettings.searchBookmarks) {
       searchPromises.push(searchInBookmarks(query));
     }
-    
+
     if (userSettings.searchHistory) {
       searchPromises.push(searchInHistory(query));
     }
-    
+
     // Ejecutar búsquedas en paralelo
     const results = await Promise.all(searchPromises);
-    
-    // Procesar resultados
+
+    // Discard results if a newer search has started
+    if (currentGeneration !== searchGeneration) return;
+
+    // Append results in order
     results.forEach(result => {
       if (result) {
         hasResults = true;
+        if (result.type === 'tabs') appendTabResults(result.data);
+        else if (result.type === 'bookmarks') appendBookmarkResults(result.data);
+        else if (result.type === 'history') appendHistoryResults(result.data);
       }
     });
     
@@ -838,6 +858,25 @@ async function showSearchSuggestions(query) {
       </div>
     `;
   }
+
+  // Add Cmd/Ctrl+N shortcut badges to the first 9 items
+  addShortcutBadges();
+}
+
+// Add Cmd/Ctrl+N shortcut badges to the first 9 result items
+function addShortcutBadges() {
+  const items = document.querySelectorAll('#commandbar-suggestions .commandbar-item');
+  const modifierKey = getModifierKey();
+  items.forEach((item, index) => {
+    if (index >= 9) return;
+    // Remove any existing shortcut badge before adding
+    const existing = item.querySelector('.commandbar-shortcut');
+    if (existing) existing.remove();
+    const badge = document.createElement('span');
+    badge.className = 'commandbar-shortcut';
+    badge.textContent = `${modifierKey}+${index + 1}`;
+    item.appendChild(badge);
+  });
 }
 
 // Buscar en pestañas
@@ -849,13 +888,12 @@ async function searchInTabs(query) {
     });
     
     if (response.success && response.tabs.length > 0) {
-      appendTabResults(response.tabs);
-      return true; // Indicar que hubo resultados
+      return { type: 'tabs', data: response.tabs };
     }
-    return false; // Indicar que no hubo resultados
+    return null;
   } catch (error) {
     console.error('Error buscando en pestañas:', error);
-    return false;
+    return null;
   }
 }
 
@@ -868,13 +906,12 @@ async function searchInBookmarks(query) {
     });
     
     if (response.success && response.bookmarks.length > 0) {
-      appendBookmarkResults(response.bookmarks);
-      return true; // Indicar que hubo resultados
+      return { type: 'bookmarks', data: response.bookmarks };
     }
-    return false; // Indicar que no hubo resultados
+    return null;
   } catch (error) {
     console.error('Error buscando en bookmarks:', error);
-    return false;
+    return null;
   }
 }
 
@@ -887,13 +924,12 @@ async function searchInHistory(query) {
     });
     
     if (response.success && response.history.length > 0) {
-      appendHistoryResults(response.history);
-      return true; // Indicar que hubo resultados
+      return { type: 'history', data: response.history };
     }
-    return false; // Indicar que no hubo resultados
+    return null;
   } catch (error) {
     console.error('Error buscando en historial:', error);
-    return false;
+    return null;
   }
 }
 
@@ -902,7 +938,7 @@ function appendTabResults(tabs) {
   const suggestions = document.getElementById('commandbar-suggestions');
   
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.openTabs')}</div>`;
-  tabs.slice(0, userSettings.maxResults).forEach(tab => {
+  tabs.slice(0, 3).forEach(tab => {
     const favicon = tab.favIconUrl || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23666" d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8z"/></svg>';
     html += `
       <div class="commandbar-item" data-action="switch-tab" data-tab-id="${tab.id}">
@@ -922,7 +958,7 @@ function appendBookmarkResults(bookmarks) {
   const suggestions = document.getElementById('commandbar-suggestions');
   
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.bookmarks')}</div>`;
-  bookmarks.slice(0, userSettings.maxResults).forEach(bookmark => {
+  bookmarks.slice(0, 2).forEach(bookmark => {
     if (bookmark.url) {
       html += `
         <div class="commandbar-item" data-action="open-bookmark" data-url="${bookmark.url}">
@@ -943,7 +979,7 @@ function appendHistoryResults(history) {
   const suggestions = document.getElementById('commandbar-suggestions');
   
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.history')}</div>`;
-  history.slice(0, userSettings.maxResults).forEach(item => {
+  history.slice(0, 4).forEach(item => {
     const hostname = new URL(item.url).hostname;
     html += `
       <div class="commandbar-item" data-action="open-history" data-url="${item.url}">

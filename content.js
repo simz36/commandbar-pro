@@ -301,8 +301,9 @@ function handleInput(e) {
     if (query) {
       performSearch(query);
       
-      // Solo autocompletar si NO está borrando y no empieza con "/"
-      if (!isDeleting && !isInDeletionMode && !query.startsWith('/') && query.length >= 2) {
+      // Solo autocompletar si NO está borrando, no empieza con "/", y no tiene keyword prefix
+      const parsedForAC = parseKeywordPrefix(query);
+      if (!isDeleting && !isInDeletionMode && !query.startsWith('/') && !parsedForAC.prefix && query.length >= 2) {
         // Autocompletado INSTANTÁNEO estilo Arc
         performAutocompleteInstant(query);
       } else {
@@ -646,16 +647,34 @@ function navigateSuggestions(direction) {
   suggestions[index].scrollIntoView({ block: 'nearest' });
 }
 
+// Parse keyword prefix (e.g. "b query" -> bookmarks, "h query" -> history)
+function parseKeywordPrefix(query) {
+  const match = query.match(/^([bh]) (.+)/);
+  if (match) {
+    return { prefix: match[1], query: match[2] };
+  }
+  return { prefix: null, query };
+}
+
 // Realizar búsqueda
 async function performSearch(query) {
   const suggestions = document.getElementById('commandbar-suggestions');
-  
+
+  // Check for keyword prefix
+  const parsed = parseKeywordPrefix(query);
+
   // Trackear búsquedas (solo si está habilitado)
-  trackUsageLocal('search_performed', { 
-    type: isURL(query) ? 'url' : query.startsWith('/') ? 'command' : 'text',
-    length: query.length 
+  trackUsageLocal('search_performed', {
+    type: isURL(query) ? 'url' : query.startsWith('/') ? 'command' : parsed.prefix ? `keyword:${parsed.prefix}` : 'text',
+    length: query.length
   });
-  
+
+  // If keyword prefix is active, go directly to filtered search
+  if (parsed.prefix) {
+    showSearchSuggestions(parsed.query, parsed.prefix);
+    return;
+  }
+
   // Detectar tipo de búsqueda
   if (isURL(query)) {
     showURLSuggestions(query);
@@ -756,12 +775,12 @@ function showCommandSuggestions(command) {
 }
 
 // Mostrar sugerencias de búsqueda
-async function showSearchSuggestions(query) {
+async function showSearchSuggestions(query, keywordPrefix = null) {
   const input = document.getElementById('commandbar-input');
   const suggestionsContainer = document.getElementById('commandbar-suggestions');
-  
+
   if (!input || !suggestionsContainer) return;
-  
+
   // Limpiar sugerencias anteriores
   suggestionsContainer.innerHTML = '';
 
@@ -772,16 +791,25 @@ async function showSearchSuggestions(query) {
     // Determinar qué fuentes buscar basado en configuración
     const searchPromises = [];
 
-    if (userSettings.searchTabs) {
-      searchPromises.push(searchInTabs(query));
-    }
-
-    if (userSettings.searchBookmarks) {
+    if (keywordPrefix === 'b') {
+      // Keyword: bookmarks only
       searchPromises.push(searchInBookmarks(query));
-    }
-
-    if (userSettings.searchHistory) {
+    } else if (keywordPrefix === 'h') {
+      // Keyword: history only
       searchPromises.push(searchInHistory(query));
+    } else {
+      // Default: search all enabled sources
+      if (userSettings.searchTabs) {
+        searchPromises.push(searchInTabs(query));
+      }
+
+      if (userSettings.searchBookmarks) {
+        searchPromises.push(searchInBookmarks(query));
+      }
+
+      if (userSettings.searchHistory) {
+        searchPromises.push(searchInHistory(query));
+      }
     }
 
     // Ejecutar búsquedas en paralelo
@@ -791,12 +819,15 @@ async function showSearchSuggestions(query) {
     if (currentGeneration !== searchGeneration) return;
 
     // Append results in order
+    // Show more results when keyword-filtering to a single source
+    const keywordMaxItems = keywordPrefix ? 10 : undefined;
+
     results.forEach(result => {
       if (result) {
         hasResults = true;
         if (result.type === 'tabs') appendTabResults(result.data);
-        else if (result.type === 'bookmarks') appendBookmarkResults(result.data);
-        else if (result.type === 'history') appendHistoryResults(result.data);
+        else if (result.type === 'bookmarks') appendBookmarkResults(result.data, keywordMaxItems);
+        else if (result.type === 'history') appendHistoryResults(result.data, keywordMaxItems);
       }
     });
     
@@ -954,11 +985,11 @@ function appendTabResults(tabs) {
 }
 
 // Agregar resultados de bookmarks
-function appendBookmarkResults(bookmarks) {
+function appendBookmarkResults(bookmarks, maxItems = 2) {
   const suggestions = document.getElementById('commandbar-suggestions');
-  
+
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.bookmarks')}</div>`;
-  bookmarks.slice(0, 2).forEach(bookmark => {
+  bookmarks.slice(0, maxItems).forEach(bookmark => {
     if (bookmark.url) {
       html += `
         <div class="commandbar-item" data-action="open-bookmark" data-url="${bookmark.url}">
@@ -975,11 +1006,11 @@ function appendBookmarkResults(bookmarks) {
 }
 
 // Agregar resultados de historial
-function appendHistoryResults(history) {
+function appendHistoryResults(history, maxItems = 4) {
   const suggestions = document.getElementById('commandbar-suggestions');
-  
+
   let html = `<div class="commandbar-section"><div class="commandbar-section-title">${i18n.t('sections.history')}</div>`;
-  history.slice(0, 4).forEach(item => {
+  history.slice(0, maxItems).forEach(item => {
     const hostname = new URL(item.url).hostname;
     html += `
       <div class="commandbar-item" data-action="open-history" data-url="${item.url}">

@@ -294,15 +294,17 @@ function handleInput(e) {
     return;
   }
   
-  const query = e.target.value.trim();
-  
+  const rawQuery = e.target.value;
+  const query = rawQuery.trim();
+
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     if (query) {
-      performSearch(query);
+      // Use raw (untrimmed) value so keyword prefixes like "h " are detected
+      performSearch(rawQuery);
       
       // Solo autocompletar si NO está borrando, no empieza con "/", y no tiene keyword prefix
-      const parsedForAC = parseKeywordPrefix(query);
+      const parsedForAC = parseKeywordPrefix(rawQuery);
       if (!isDeleting && !isInDeletionMode && !query.startsWith('/') && !parsedForAC.prefix && query.length >= 2) {
         // Autocompletado INSTANTÁNEO estilo Arc
         performAutocompleteInstant(query);
@@ -546,12 +548,6 @@ function handleKeyDown(e) {
       if (autocompleteSuggestion && e.target.selectionStart < e.target.value.length) {
         e.target.setSelectionRange(e.target.value.length, e.target.value.length);
         clearAutocomplete();
-      } else {
-        // Si no hay autocompletado, buscar en Perplexity
-        const query = e.target.value.trim();
-        if (query) {
-          executePerplexitySearch(query);
-        }
       }
       break;
       
@@ -565,8 +561,6 @@ function handleKeyDown(e) {
           // Si hay autocompletado activo, navegar directamente
           if (autocompleteData && query === autocompleteData.suggestion) {
             navigateToUrl(query);
-          } else {
-            executeSearch(query);
           }
         }
       }
@@ -647,9 +641,9 @@ function navigateSuggestions(direction) {
   suggestions[index].scrollIntoView({ block: 'nearest' });
 }
 
-// Parse keyword prefix (e.g. "b query" -> bookmarks, "h query" -> history)
+// Parse keyword prefix (e.g. "b query" -> bookmarks, "h query" -> history, "t query" -> tabs)
 function parseKeywordPrefix(query) {
-  const match = query.match(/^([bh]) (.+)/);
+  const match = query.match(/^([bht]) (.*)/);
   if (match) {
     return { prefix: match[1], query: match[2] };
   }
@@ -660,8 +654,11 @@ function parseKeywordPrefix(query) {
 async function performSearch(query) {
   const suggestions = document.getElementById('commandbar-suggestions');
 
-  // Check for keyword prefix
+  // Check for keyword prefix (needs untrimmed input to detect "h " / "b ")
   const parsed = parseKeywordPrefix(query);
+
+  // Trim for normal (non-prefix) searches
+  query = parsed.prefix ? query : query.trim();
 
   // Trackear búsquedas (solo si está habilitado)
   trackUsageLocal('search_performed', {
@@ -671,7 +668,7 @@ async function performSearch(query) {
 
   // If keyword prefix is active, go directly to filtered search
   if (parsed.prefix) {
-    showSearchSuggestions(parsed.query, parsed.prefix);
+    showSearchSuggestions(parsed.query.trim(), parsed.prefix);
     return;
   }
 
@@ -791,7 +788,10 @@ async function showSearchSuggestions(query, keywordPrefix = null) {
     // Determinar qué fuentes buscar basado en configuración
     const searchPromises = [];
 
-    if (keywordPrefix === 'b') {
+    if (keywordPrefix === 't') {
+      // Keyword: tabs only
+      searchPromises.push(searchInTabs(query));
+    } else if (keywordPrefix === 'b') {
       // Keyword: bookmarks only
       searchPromises.push(searchInBookmarks(query));
     } else if (keywordPrefix === 'h') {
@@ -830,52 +830,6 @@ async function showSearchSuggestions(query, keywordPrefix = null) {
         else if (result.type === 'history') appendHistoryResults(result.data, keywordMaxItems);
       }
     });
-    
-    // Agregar sugerencias de búsqueda web si hay texto pero pocos resultados
-    if (query.trim() && (!hasResults || suggestionsContainer.children.length < 3)) {
-      // Verificar que no exista ya una sección de Web Search para evitar duplicaciones
-      const existingWebSearch = suggestionsContainer.querySelector('.commandbar-section[data-type="web-search"]');
-      if (!existingWebSearch) {
-        const engines = [
-          { key: 'google', name: i18n.t('search.searchInGoogle', { query }) },
-          { key: 'bing', name: i18n.t('search.searchInBing', { query }) },
-          { key: 'duckduckgo', name: i18n.t('search.searchInDuckDuckGo', { query }) },
-          { key: 'yahoo', name: i18n.t('search.searchInYahoo', { query }) },
-          { key: 'perplexity', name: i18n.t('search.searchInPerplexity', { query }) }
-        ];
-        
-        // Crear sección de búsqueda web
-        const webSection = document.createElement('div');
-        webSection.className = 'commandbar-section';
-        webSection.dataset.type = 'web-search'; // Marcar para evitar duplicaciones
-        webSection.innerHTML = `<div class="commandbar-section-title">${i18n.t('sections.webSearch')}</div>`;
-        
-        engines.forEach((engine, index) => {
-          const item = document.createElement('div');
-          item.className = 'commandbar-item';
-          item.dataset.action = `${engine.key}-search`;
-          item.dataset.query = query;
-          
-          // Determinar el atajo de teclado
-          let shortcut = '';
-          if (engine.key === 'perplexity') {
-            shortcut = 'Tab';
-          } else if (engine.key === userSettings.defaultSearchEngine) {
-            shortcut = 'Enter';
-          }
-          
-          item.innerHTML = `
-            <span class="commandbar-icon">🔍</span>
-            <span class="commandbar-text">${engine.name}</span>
-            ${shortcut ? `<span class="commandbar-shortcut">${shortcut}</span>` : ''}
-          `;
-          webSection.appendChild(item);
-        });
-        
-        suggestionsContainer.appendChild(webSection);
-        hasResults = true;
-      }
-    }
     
   } catch (error) {
     console.error('Error in search suggestions:', error);
@@ -959,7 +913,7 @@ async function searchInHistory(query) {
     }
     return null;
   } catch (error) {
-    console.error('Error buscando en historial:', error);
+    console.error('[CommandBar] Error buscando en historial:', error);
     return null;
   }
 }

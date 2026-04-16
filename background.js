@@ -567,7 +567,8 @@ async function searchHistory(query, sendResponse) {
   try {
     const history = await chrome.history.search({
       text: query,
-      maxResults: 50
+      maxResults: 500,
+      startTime: 0
     });
     const seen = new Set();
     const deduped = history.filter(item => {

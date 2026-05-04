@@ -10,52 +10,52 @@ function isUrlExcluded(url, patterns) {
   });
 }
 
-// Service Worker para CommandBar Pro
+// Service Worker for CommandBar Pro
 chrome.runtime.onInstalled.addListener((details) => {
-  // Abrir página de opciones al instalar
+  // Open the options page on install
   if (details.reason === 'install') {
     chrome.runtime.openOptionsPage();
   }
   
-  // CARGAR CACHE ULTRA al instalar
+  // LOAD ULTRA CACHE on install
   loadUltraCache();
   
-  // Verificar cache ULTRA cada 5 minutos para asegurar que siempre esté cargado y válido
+  // Re-check ULTRA cache every 5 minutes to ensure it stays loaded and valid
   setInterval(async () => {
     if ((!ULTRA_CACHE.state.isLoaded || !ULTRA_CACHE.state.integrityValid) && !ULTRA_CACHE.state.isLoading) {
-      console.log('🔄 Verificación automática: Cache ULTRA no cargado o inválido, cargando...');
+      console.log('🔄 Auto-check: ULTRA cache not loaded or invalid, loading...');
       await loadUltraCache();
     }
-  }, 5 * 60 * 1000); // 5 minutos
+  }, 5 * 60 * 1000); // 5 minutes
 });
 
-// Cargar cache ULTRA al arrancar la extensión
+// Load ULTRA cache on extension startup
 chrome.runtime.onStartup.addListener(() => {
-  console.log('CommandBar iniciado');
+  console.log('CommandBar started');
   
-  // CARGAR CACHE ULTRA al arrancar
+  // LOAD ULTRA CACHE on startup
   loadUltraCache();
   
-  // Verificar cache ULTRA cada 5 minutos para asegurar que siempre esté cargado y válido
+  // Re-check ULTRA cache every 5 minutes to ensure it stays loaded and valid
   setInterval(async () => {
     if ((!ULTRA_CACHE.state.isLoaded || !ULTRA_CACHE.state.integrityValid) && !ULTRA_CACHE.state.isLoading) {
-      console.log('🔄 Verificación automática: Cache ULTRA no cargado o inválido, cargando...');
+      console.log('🔄 Auto-check: ULTRA cache not loaded or invalid, loading...');
       await loadUltraCache();
     }
-  }, 5 * 60 * 1000); // 5 minutos
+  }, 5 * 60 * 1000); // 5 minutes
 });
 
-// Auto-actualizar cache ULTRA cuando se visita una página
+// Auto-update ULTRA cache on page visits
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
     updateUltraCache(tab.url, tab.title || '');
   }
 });
 
-// Trackear uso de la página de opciones
+// Track options-page usage
 async function trackOptionsPageOpened() {
   try {
-    // Verificar si el usuario tiene habilitadas las estadísticas
+    // Check whether the user has stats enabled
     const { storeUsageStats } = await chrome.storage.sync.get(['storeUsageStats']);
     
     if (storeUsageStats === true) {
@@ -76,10 +76,10 @@ async function trackOptionsPageOpened() {
   }
 }
 
-// Función genérica para tracking de uso
+// Generic usage tracking function
 async function trackUsage(action, details = {}) {
   try {
-    // Verificar si el usuario tiene habilitadas las estadísticas
+    // Check whether the user has stats enabled
     const { storeUsageStats } = await chrome.storage.sync.get(['storeUsageStats']);
     
     if (storeUsageStats === true) {
@@ -91,10 +91,10 @@ async function trackUsage(action, details = {}) {
         stats[today] = {};
       }
       
-      // Incrementar contador de la acción
+      // Increment action counter
       stats[today][action] = (stats[today][action] || 0) + 1;
       
-      // Agregar detalles específicos si se proporcionan
+      // Add specific details if provided
       if (Object.keys(details).length > 0) {
         const detailsKey = `${action}_details`;
         if (!stats[today][detailsKey]) {
@@ -113,11 +113,11 @@ async function trackUsage(action, details = {}) {
   }
 }
 
-// Función para inyección forzada en sitios problemáticos
+// Forced injection helper for problematic sites
 async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', currentUrl = null) {
   try {
     
-    // Verificar que la pestaña sea accesible
+    // Verify the tab is accessible
     const tab = await chrome.tabs.get(tabId);
     
     // Check if URL is in excluded websites list
@@ -126,15 +126,15 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
       return false;
     }
 
-    // NUEVA LÓGICA: Permitir inyección en nuestras páginas de extensión
+    // NEW LOGIC: allow injection on our own extension pages
     const isOurExtensionPage = tab.url?.includes(chrome.runtime.id) && tab.url?.includes('new_tab.html');
     
-    // Si es nuestra página, no necesita inyección - es auto-suficiente
+    // If it's our page, no injection needed — it's self-sufficient
     if (isOurExtensionPage) {
-      return true; // Reportar éxito ya que la página se maneja sola
+      return true; // Report success since the page handles itself
     }
     
-    // No intentar inyectar en páginas internas de Chrome (EXCEPTO las nuestras)
+    // Skip injection on Chrome internal pages (EXCEPT ours)
     if ((tab.url?.startsWith('chrome://') || 
          tab.url?.startsWith('chrome-extension://') || 
          tab.url?.startsWith('edge://') ||
@@ -143,48 +143,48 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
     }
     
     
-    // PASO 1: Inyectar i18n.js primero
+    // STEP 1: Inject i18n.js first
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tabId },
         files: ['i18n.js']
       });
     } catch (error) {
-      console.error('Error inyectando i18n.js:', error.message);
+      console.error('Error injecting i18n.js:', error.message);
     }
     
-    // PASO 2: Inyectar styles.css
+    // STEP 2: Inject styles.css
     try {
       await chrome.scripting.insertCSS({
         target: { tabId: tabId },
         files: ['styles.css']
       });
     } catch (error) {
-      console.error('Error inyectando styles.css:', error.message);
+      console.error('Error injecting styles.css:', error.message);
     }
     
-    // PASO 3: Inyectar content.js completo
+    // STEP 3: Inject the full content.js
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tabId },
         files: ['content.js']
       });
     } catch (error) {
-      console.error('Error inyectando content.js:', error.message);
+      console.error('Error injecting content.js:', error.message);
     }
     
-    // PASO 4: Esperar un momento y activar CommandBar
+    // STEP 4: Wait briefly and activate CommandBar
     setTimeout(async () => {
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tabId },
           func: function(action, currentUrl) {
             
-            // Verificar que las funciones del CommandBar estén disponibles
+            // Verify CommandBar functions are available
             if (typeof showCommandBar === 'function') {
               
               if (action === 'edit_current_url' && currentUrl) {
-                // Limpiar URL para modo edición
+                // Clean URL for edit mode
                 const cleanUrl = currentUrl.replace(/^https?:\/\/(www\.)?/, '').split('?')[0];
                 showCommandBar(cleanUrl);
               } else {
@@ -195,9 +195,9 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
               toggleCommandBar();
             } else {
               
-              // Fallback: crear versión básica mejorada solo si no hay otra opción
+              // Fallback: build an improved basic version only if no other option
               
-              // Verificar si ya existe CommandBar
+              // Check whether CommandBar already exists
               const existingBar = document.getElementById('commandbar-container') || document.getElementById('perplexity-commandbar');
               if (existingBar) {
                 existingBar.remove();
@@ -234,7 +234,7 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
                     ">
                       <input type="text" 
                              id="commandbar-input" 
-                             placeholder="${action === 'edit_current_url' ? 'Editar URL actual...' : 'Escribe comando, búsqueda o URL...'}" 
+                             placeholder="${action === 'edit_current_url' ? 'Edit current URL...' : 'Type command, search or URL...'}"
                              value="${action === 'edit_current_url' && currentUrl ? currentUrl.replace(/^https?:\/\/(www\.)?/, '').split('?')[0] : ''}"
                              style="
                                width: 100%;
@@ -252,15 +252,15 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
                       font-size: 14px;
                       background: white;
                     ">
-                      <div style="margin-bottom: 12px; font-weight: 600; color: #f59e0b;">⚠️ Modo de compatibilidad básico</div>
-                      <div style="margin-bottom: 12px; font-weight: 600;">⚡ Acciones disponibles:</div>
+                      <div style="margin-bottom: 12px; font-weight: 600; color: #f59e0b;">⚠️ Basic compatibility mode</div>
+                      <div style="margin-bottom: 12px; font-weight: 600;">⚡ Available actions:</div>
                       <div style="display: grid; gap: 6px;">
                         <div>🌐 <strong>URLs:</strong> google.com, youtube.com, github.com</div>
-                        <div>🔍 <strong>Búsquedas:</strong> recetas de pasta, noticias tecnología</div>
-                        <div>⌨️ <strong>Comandos:</strong> /nueva, /marcadores, /historial, /configuracion</div>
+                        <div>🔍 <strong>Searches:</strong> pasta recipes, technology news</div>
+                        <div>⌨️ <strong>Commands:</strong> /new, /bookmarks, /history, /settings</div>
                       </div>
                       <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #888;">
-                        Presiona <kbd style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Escape</kbd> para cerrar
+                        Press <kbd style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Escape</kbd> to close
                       </div>
                     </div>
                   </div>
@@ -269,7 +269,7 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
               
               document.body.appendChild(commandBar);
               
-              // Enfocar el input
+              // Focus the input
               const input = document.getElementById('commandbar-input');
               if (input) {
                 input.focus();
@@ -278,7 +278,7 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
                 }
               }
               
-              // Manejar eventos básicos
+              // Handle basic events
               function handleKeyDown(e) {
                 if (e.key === 'Escape') {
                   commandBar.remove();
@@ -296,11 +296,11 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
               function handleQuery(query, editMode = false) {
                 let url;
                 
-                // Detectar si es URL
+                // Detect if it's a URL
                 if (query.includes('.') && !query.includes(' ')) {
                   url = query.startsWith('http') ? query : 'https://' + query;
                 } else if (query.startsWith('/')) {
-                  // Comandos básicos
+                  // Basic commands
                   switch (query.toLowerCase()) {
                     case '/nueva':
                     case '/new':
@@ -322,7 +322,7 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
                       url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
                   }
                 } else {
-                  // Búsqueda web
+                  // Web search
                   url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
                 }
                 
@@ -348,19 +348,19 @@ async function forceInjectCommandBar(tabId, action = 'toggle_commandbar', curren
         });
         
       } catch (activationError) {
-        console.error('Error activando CommandBar tras inyección:', activationError);
+        console.error('Error activating CommandBar after injection:', activationError);
       }
     }, 300); // Dar tiempo para que los scripts se inicialicen
     
     return true;
     
   } catch (error) {
-    console.error('Error en inyección forzada:', error);
+    console.error('Error during forced injection:', error);
     return false;
   }
 }
 
-// Manejar mensajes desde content scripts
+// Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
     case 'track_usage':
@@ -425,7 +425,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     
     case 'search_history_autocomplete':
-      // Usar Cache ULTRA si está disponible, sino fallback a legacy
+      // Use ULTRA cache when available, fallback to legacy
       if (ULTRA_CACHE.state.isLoaded) {
         searchUltraCache(message.query, sendResponse);
       } else {
@@ -441,17 +441,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.tabs.sendMessage(tabs[0].id, { 
               action: 'ultra_cache_progress', 
               progress: progress 
-            }).catch(() => {}); // Ignorar errores si la pestaña no está disponible
+            }).catch(() => {}); // Ignore errors if the tab is unavailable
           }
         });
       }).then(sendResponse);
       return true;
       
     case 'get_ultra_cache_info':
-      // Validar integridad antes de enviar información
+      // Validate integrity before sending info
       const integrity = validateUltraCacheIntegrity();
       
-      // Debug: mostrar información detallada en consola
+      // Debug: log detailed info to the console
       console.log('🔍 Debug Cache ULTRA Info:', {
         state: ULTRA_CACHE.state,
         memory: {
@@ -496,7 +496,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
       
     case 'rebuild_global_cache':
-      // Esta función legacy ya no se usa, redirigir a cache ULTRA
+      // This legacy function is unused; redirect to ULTRA cache
       loadUltraCache(true, (progress) => {
         // Enviar progreso al content script
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -504,7 +504,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.tabs.sendMessage(tabs[0].id, { 
               action: 'cache_progress', 
               progress: progress 
-            }).catch(() => {}); // Ignorar errores si la pestaña no está disponible
+            }).catch(() => {}); // Ignore errors if the tab is unavailable
           }
         });
       }).then(sendResponse);
@@ -523,7 +523,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
       
     case 'request_commandbar_open':
-      // Solicitud directa desde nuestra página de extensión
+      // Direct request from our extension page
       if (sender.tab?.id) {
         setTimeout(async () => {
           try {
@@ -538,7 +538,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Buscar en pestañas
+// Search tabs
 async function searchTabs(query, sendResponse) {
   try {
     const tabs = await chrome.tabs.query({});
@@ -552,7 +552,7 @@ async function searchTabs(query, sendResponse) {
   }
 }
 
-// Buscar en bookmarks
+// Search bookmarks
 async function searchBookmarks(query, sendResponse) {
   try {
     const bookmarks = await chrome.bookmarks.search(query);
@@ -562,7 +562,7 @@ async function searchBookmarks(query, sendResponse) {
   }
 }
 
-// Buscar en historial
+// Search history
 async function searchHistory(query, sendResponse) {
   try {
     const history = await chrome.history.search({
@@ -577,16 +577,11 @@ async function searchHistory(query, sendResponse) {
       return true;
     }).slice(0, 20);
     const historyWithFavicons = await Promise.all(deduped.map(async item => {
-      const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(item.url)}&size=32`;
       try {
-        const response = await fetch(faviconUrl);
-        const blob = await response.blob();
-        const dataUrl = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-        return { ...item, favicon: dataUrl };
+        const domain = new URL(item.url).hostname;
+        const cached = getCachedFavicon(domain);
+        const favicon = cached || await cacheFavicon(domain) || '';
+        return { ...item, favicon };
       } catch {
         return { ...item, favicon: '' };
       }
@@ -597,16 +592,16 @@ async function searchHistory(query, sendResponse) {
   }
 }
 
-// Crear nueva pestaña
+// Create a new tab
 async function createTab(url, active = true, sendResponse, fromCommandBar = false) {
   try {
     const tab = await chrome.tabs.create({ url, active });
     
-    // Si la pestaña fue creada desde CommandBar, marcarla para evitar auto-open
+    // If the tab was created by CommandBar, mark it to avoid auto-open
     if (fromCommandBar) {
       commandBarCreatedTabs.add(tab.id);
       
-      // Limpiar marca después de 10 segundos (tiempo suficiente para que la pestaña cargue)
+      // Clear the mark after 10 seconds (enough time for the tab to load)
       setTimeout(() => {
         commandBarCreatedTabs.delete(tab.id);
       }, 10000);
@@ -618,7 +613,7 @@ async function createTab(url, active = true, sendResponse, fromCommandBar = fals
   }
 }
 
-// Crear nueva ventana
+// Create a new window
 async function createWindow(url, sendResponse) {
   try {
     const window = await chrome.windows.create({ url });
@@ -628,7 +623,7 @@ async function createWindow(url, sendResponse) {
   }
 }
 
-// Crear nueva ventana de incognito
+// Create a new window de incognito
 async function createIncognitoWindow(url, sendResponse) {
   try {
     const window = await chrome.windows.create({ 
@@ -641,7 +636,7 @@ async function createIncognitoWindow(url, sendResponse) {
   }
 }
 
-// Recargar pestaña
+// Reload tab
 async function reloadTab(tabId, sendResponse) {
   try {
     await chrome.tabs.reload(tabId);
@@ -666,7 +661,7 @@ async function toggleDevTools(sendResponse) {
   }
 }
 
-// Obtener pestaña actual
+// Get the current tab
 async function getCurrentTab(sendResponse) {
   try {
     const currentTab = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -680,7 +675,7 @@ async function getCurrentTab(sendResponse) {
   }
 }
 
-// Cambiar a pestaña
+// Switch to tab
 async function switchToTab(tabId, sendResponse) {
   try {
     await chrome.tabs.update(tabId, { active: true });
@@ -692,7 +687,7 @@ async function switchToTab(tabId, sendResponse) {
   }
 }
 
-// Cerrar pestaña
+// Close tab
 async function closeTab(tabId, sendResponse) {
   try {
     await chrome.tabs.remove(tabId);
@@ -702,7 +697,7 @@ async function closeTab(tabId, sendResponse) {
   }
 }
 
-// Pinear/despinear pestaña
+// Pin/unpin tab
 async function pinTab(tabId, sendResponse) {
   try {
     const tab = await chrome.tabs.get(tabId);
@@ -713,7 +708,7 @@ async function pinTab(tabId, sendResponse) {
   }
 }
 
-// Duplicar pestaña
+// Duplicate tab
 async function duplicateTab(tabId, sendResponse) {
   try {
     const tab = await chrome.tabs.duplicate(tabId);
@@ -723,7 +718,7 @@ async function duplicateTab(tabId, sendResponse) {
   }
 }
 
-// Obtener todas las pestañas
+// Get all tabs
 async function getAllTabs(sendResponse) {
   try {
     const tabs = await chrome.tabs.query({});
@@ -735,7 +730,7 @@ async function getAllTabs(sendResponse) {
 
 // CACHE ULTRA - Sistema de cache permanente y completo
 const ULTRA_CACHE = {
-  // Cache en memoria para acceso rápido
+  // In-memory cache for fast access
   memory: {
     history: new Map(),
     favicons: new Map(),
@@ -752,25 +747,25 @@ const ULTRA_CACHE = {
     totalDomains: 0,
     totalFavicons: 0,
     memoryUsage: 0,
-    integrityValid: false,     // Nueva: validación de integridad
+    integrityValid: false,     // New: integrity validation
     loadQuality: 'none'        // Nueva: calidad de carga (none, partial, full)
   },
   
-  // Configuración
+  // Configuration
   config: {
-    maxHistoryResults: 100000, // 100,000 URLs máximo
-    faviconCacheSize: 1000,    // 1,000 favicons máximo
-    autoUpdate: true,          // Auto-actualización
+    maxHistoryResults: 100000, // 100,000 URLs max
+    faviconCacheSize: 1000,    // 1,000 favicons max
+    autoUpdate: true,          // Auto-update
     persistent: true,          // Cache persistente
-    minUrlsForValidCache: 100,  // Reducido: mínimo de URLs para cache válido (más flexible)
-    maxStorageSize: 50 * 1024 * 1024 // Nueva: 50MB límite de storage
+    minUrlsForValidCache: 100,  // Reduced: minimum URLs for a valid cache (more lenient)
+    maxStorageSize: 50 * 1024 * 1024 // New: 50MB storage limit
   }
 };
 
 // Constantes para compatibilidad (ya no se usan, pero mantener por si acaso)
-const MAX_HISTORY_RESULTS = 1000; // Máximo de entradas del historial a consultar
+const MAX_HISTORY_RESULTS = 1000; // Max history entries to query
 
-// Función para validar integridad del cache ULTRA
+// Validate ULTRA cache integrity
 function validateUltraCacheIntegrity() {
   try {
     const historySize = ULTRA_CACHE.memory.history.size;
@@ -778,13 +773,13 @@ function validateUltraCacheIntegrity() {
     const wordsSize = ULTRA_CACHE.memory.words.size;
     const faviconsSize = ULTRA_CACHE.memory.favicons.size;
     
-    // Verificar cantidad mínima de URLs (más flexible)
-    const hasMinUrls = historySize >= Math.min(ULTRA_CACHE.config.minUrlsForValidCache, 100); // Mínimo 100 URLs
+    // Check minimum URL count (more lenient)
+    const hasMinUrls = historySize >= Math.min(ULTRA_CACHE.config.minUrlsForValidCache, 100); // At least 100 URLs
     
-    // Verificar que los índices estén construidos (más flexible)
+    // Ensure indexes are built (more lenient)
     const hasIndexes = domainsSize > 0; // Solo requiere dominios, no palabras
     
-    // Verificar que no haya datos corruptos (más flexible)
+    // Ensure no corrupt data (more lenient)
     const hasValidData = historySize > 0; // Solo requiere que haya datos
     
     // Determinar calidad de carga
@@ -794,17 +789,17 @@ function validateUltraCacheIntegrity() {
     } else if (historySize >= ULTRA_CACHE.config.minUrlsForValidCache) {
       loadQuality = 'partial';
     } else if (historySize >= 100) {
-      loadQuality = 'minimal'; // Nueva categoría para caches pequeños pero válidos
+      loadQuality = 'minimal'; // New category for small but valid caches
     }
     
-    // Validación más flexible: aceptar caches con al menos 100 URLs y dominios indexados
+    // More lenient validation: accept caches with at least 100 URLs and indexed domains
     const integrityValid = hasMinUrls && hasIndexes && hasValidData;
     
     // Actualizar estado
     ULTRA_CACHE.state.integrityValid = integrityValid;
     ULTRA_CACHE.state.loadQuality = loadQuality;
     
-    console.log(`🔍 Validación de integridad ULTRA:`, {
+    console.log(`🔍 ULTRA integrity validation:`, {
       historySize,
       domainsSize,
       wordsSize,
@@ -836,7 +831,7 @@ function validateUltraCacheIntegrity() {
     };
     
   } catch (error) {
-    console.error('❌ Error validando integridad del cache ULTRA:', error);
+    console.error('❌ Error validating ULTRA cache integrity:', error);
     ULTRA_CACHE.state.integrityValid = false;
     ULTRA_CACHE.state.loadQuality = 'none';
     return { valid: false, quality: 'none', error: error.message };
@@ -846,7 +841,7 @@ function validateUltraCacheIntegrity() {
 // CARGAR CACHE ULTRA desde storage persistente
 async function loadUltraCacheFromStorage() {
   try {
-    console.log('🔄 Cargando cache ULTRA desde storage...');
+    console.log('🔄 Loading ULTRA cache from storage...');
     
     const result = await chrome.storage.local.get([
       'ultra_cache_history',
@@ -855,47 +850,47 @@ async function loadUltraCacheFromStorage() {
       'ultra_cache_config'
     ]);
     
-    // Cargar configuración
+    // Load configuration
     if (result.ultra_cache_config) {
       Object.assign(ULTRA_CACHE.config, result.ultra_cache_config);
     }
     
-    // Cargar estado
+    // Load state
     if (result.ultra_cache_state) {
       Object.assign(ULTRA_CACHE.state, result.ultra_cache_state);
     }
     
-    // Cargar historial
+    // Load history
     if (result.ultra_cache_history) {
       ULTRA_CACHE.memory.history = new Map(result.ultra_cache_history);
-      console.log(`📊 Cache ULTRA cargado: ${ULTRA_CACHE.memory.history.size} URLs`);
+      console.log(`📊 ULTRA cache loaded: ${ULTRA_CACHE.memory.history.size} URLs`);
     }
     
-    // Cargar favicons
+    // Load favicons
     if (result.ultra_cache_favicons) {
       ULTRA_CACHE.memory.favicons = new Map(result.ultra_cache_favicons);
-      console.log(`🎨 Favicons cargados: ${ULTRA_CACHE.memory.favicons.size}`);
+      console.log(`🎨 Favicons loaded: ${ULTRA_CACHE.memory.favicons.size}`);
     }
     
-    // Reconstruir índices
+    // Rebuild indexes
     rebuildUltraCacheIndexes();
     
-    // VALIDAR INTEGRIDAD del cache cargado
+    // VALIDATE INTEGRITY of the loaded cache
     const integrity = validateUltraCacheIntegrity();
     
     if (integrity.valid) {
       ULTRA_CACHE.state.isLoaded = true;
-      console.log(`✅ Cache ULTRA cargado desde storage (${integrity.quality} quality)`);
+      console.log(`✅ ULTRA cache loaded from storage (${integrity.quality} quality)`);
       return true;
     } else {
-      console.warn(`⚠️ Cache ULTRA cargado pero integridad inválida:`, integrity);
+      console.warn(`⚠️ ULTRA cache loaded but integrity invalid:`, integrity);
       ULTRA_CACHE.state.isLoaded = false;
       ULTRA_CACHE.state.integrityValid = false;
       return false; // Forzar recarga completa
     }
     
   } catch (error) {
-    console.error('❌ Error cargando cache ULTRA:', error);
+    console.error('❌ Error loading ULTRA cache:', error);
     ULTRA_CACHE.state.isLoaded = false;
     ULTRA_CACHE.state.integrityValid = false;
     return false;
@@ -916,22 +911,22 @@ async function saveUltraCacheToStorage() {
     console.log('💾 Cache ULTRA guardado en storage');
     
   } catch (error) {
-    console.error('❌ Error guardando cache ULTRA:', error);
+    console.error('❌ Error saving ULTRA cache:', error);
   }
 }
 
 // CACHEAR FAVICON de un dominio
 async function cacheFavicon(domain) {
   try {
-    // Verificar si ya está cacheado
+    // Check whether already cached
     if (ULTRA_CACHE.memory.favicons.has(domain)) {
       return ULTRA_CACHE.memory.favicons.get(domain);
     }
     
-    // Limpiar cache de favicons si es muy grande
+    // Trim favicon cache if it's too large
     if (ULTRA_CACHE.memory.favicons.size >= ULTRA_CACHE.config.faviconCacheSize) {
       const entries = Array.from(ULTRA_CACHE.memory.favicons.entries());
-      const oldestEntries = entries.slice(0, 100); // Eliminar 100 más antiguos
+      const oldestEntries = entries.slice(0, 100); // Drop the 100 oldest
       oldestEntries.forEach(([key]) => ULTRA_CACHE.memory.favicons.delete(key));
     }
     
@@ -948,7 +943,7 @@ async function cacheFavicon(domain) {
         reader.onload = () => {
           const base64 = reader.result;
           
-          // Guardar en cache
+          // Save to cache
           ULTRA_CACHE.memory.favicons.set(domain, {
             url: faviconUrl,
             data: base64,
@@ -957,7 +952,7 @@ async function cacheFavicon(domain) {
           
           ULTRA_CACHE.state.totalFavicons = ULTRA_CACHE.memory.favicons.size;
           
-          // Guardar en storage (async)
+          // Save to storage (async)
           saveUltraCacheToStorage();
           
           resolve(base64);
@@ -981,12 +976,12 @@ function getCachedFavicon(domain) {
     return cached.data;
   }
   
-  // Si no está cacheado, iniciar cacheo en background
+  // If not cached, start background caching
   cacheFavicon(domain);
   return null;
 }
 
-// RECONSTRUIR ÍNDICES del cache ULTRA
+// REBUILD ULTRA cache INDEXES
 function rebuildUltraCacheIndexes() {
   ULTRA_CACHE.memory.domains.clear();
   ULTRA_CACHE.memory.words.clear();
@@ -1006,7 +1001,7 @@ function rebuildUltraCacheIndexes() {
       }
       ULTRA_CACHE.memory.domains.get(domain).push(item);
       
-      // Indexar por palabras del título
+      // Index by title words
       const titleWords = item.title.toLowerCase().split(/\s+/);
       titleWords.forEach(word => {
         if (word.length > 2 && word.length < 20) {
@@ -1024,27 +1019,27 @@ function rebuildUltraCacheIndexes() {
   }
   
   ULTRA_CACHE.state.totalDomains = domainCount;
-  console.log(`🔍 Índices reconstruidos: ${domainCount} dominios, ${wordCount} palabras`);
+  console.log(`🔍 Indexes rebuilt: ${domainCount} domains, ${wordCount} words`);
   
-  // Validar integridad después de reconstruir índices
+  // Validate integrity after rebuilding indexes
   validateUltraCacheIntegrity();
 }
 
-// CARGAR CACHE ULTRA - Función principal
+// LOAD ULTRA CACHE — main function
 async function loadUltraCache(forceRebuild = false, progressCallback = null) {
-  // SIEMPRE intentar cargar si no está cargado, incluso si está cargando
+  // ALWAYS try to load if not loaded, even when loading
   if (ULTRA_CACHE.state.isLoaded && !forceRebuild) {
-    return { success: true, message: 'Cache ULTRA ya cargado' };
+    return { success: true, message: 'ULTRA cache already loaded' };
   }
   
-  // Si está cargando, esperar un poco y verificar de nuevo
+  // If loading, wait briefly and re-check
   if (ULTRA_CACHE.state.isLoading) {
-    console.log('⏳ Cache ULTRA ya está cargando, esperando...');
+    console.log('⏳ ULTRA cache already loading, waiting...');
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Verificar si ya se cargó mientras esperábamos
+    // Check whether it loaded while we were waiting
     if (ULTRA_CACHE.state.isLoaded) {
-      return { success: true, message: 'Cache ULTRA cargado mientras esperaba' };
+      return { success: true, message: 'ULTRA cache loaded while waiting' };
     }
   }
   
@@ -1052,38 +1047,38 @@ async function loadUltraCache(forceRebuild = false, progressCallback = null) {
   
   try {
     if (progressCallback) progressCallback('🔄 Iniciando carga del cache ULTRA...');
-    console.log('🔄 Cargando cache ULTRA...');
+    console.log('🔄 Loading ULTRA cache...');
     
     // Intentar cargar desde storage primero
     if (!forceRebuild) {
       const loaded = await loadUltraCacheFromStorage();
       if (loaded && ULTRA_CACHE.state.integrityValid) {
         const quality = ULTRA_CACHE.state.loadQuality;
-        const message = quality === 'full' ? 'Cache ULTRA cargado desde storage (completo)' : 
-                       quality === 'partial' ? 'Cache ULTRA cargado desde storage (parcial)' :
-                       'Cache ULTRA cargado desde storage';
+        const message = quality === 'full' ? 'ULTRA cache loaded from storage (full)' :
+                       quality === 'partial' ? 'ULTRA cache loaded from storage (partial)' :
+                       'ULTRA cache loaded from storage';
         
         if (progressCallback) progressCallback(`✅ ${message}`);
         ULTRA_CACHE.state.isLoading = false;
         return { success: true, message, quality };
       } else if (loaded && !ULTRA_CACHE.state.integrityValid) {
-        console.log('🔄 Cache cargado pero integridad inválida, reconstruyendo...');
+        console.log('🔄 Cache loaded but integrity invalid, rebuilding...');
         if (progressCallback) progressCallback('🔄 Cache corrupto, reconstruyendo...');
       }
     }
     
-    // Limpiar cache si es rebuild forzado
+    // Clear cache on forced rebuild
     if (forceRebuild) {
       ULTRA_CACHE.memory.history.clear();
       ULTRA_CACHE.memory.favicons.clear();
       ULTRA_CACHE.state.isLoaded = false;
-      if (progressCallback) progressCallback('🧹 Cache limpiado, comenzando reconstrucción...');
+      if (progressCallback) progressCallback('🧹 Cache cleared, starting rebuild...');
     }
     
-    // Cargar TODO el historial disponible
+    // Load ALL available history
     if (progressCallback) progressCallback('📚 Consultando historial completo de Chrome...');
     const history = await chrome.history.search({
-      text: '', // Buscar todo
+      text: '', // Search everything
       maxResults: ULTRA_CACHE.config.maxHistoryResults // 100,000 URLs
     });
     
@@ -1102,7 +1097,7 @@ async function loadUltraCache(forceRebuild = false, progressCallback = null) {
         const urlObj = new URL(url);
         const domain = urlObj.hostname.replace('www.', '');
         
-        // Guardar en cache de historial
+        // Save to history cache
         ULTRA_CACHE.memory.history.set(url, {
           url: url,
           title: item.title,
@@ -1130,22 +1125,22 @@ async function loadUltraCache(forceRebuild = false, progressCallback = null) {
       }
     }
     
-    // Reconstruir índices
-    if (progressCallback) progressCallback('🔍 Reconstruyendo índices...');
+    // Rebuild indexes
+    if (progressCallback) progressCallback('🔍 Rebuilding indexes...');
     rebuildUltraCacheIndexes();
     
     // Actualizar estado
     ULTRA_CACHE.state.lastUpdate = Date.now();
     ULTRA_CACHE.state.totalUrls = processedCount;
-    ULTRA_CACHE.state.memoryUsage = ULTRA_CACHE.memory.history.size * 0.001; // Estimación en MB
+    ULTRA_CACHE.state.memoryUsage = ULTRA_CACHE.memory.history.size * 0.001; // Estimate in MB
     
-    // VALIDAR INTEGRIDAD antes de marcar como cargado
+    // VALIDATE INTEGRITY before marking loaded
     const integrity = validateUltraCacheIntegrity();
     
     if (integrity.valid) {
       ULTRA_CACHE.state.isLoaded = true;
       
-      // Guardar en storage
+      // Save to storage
       if (progressCallback) progressCallback('💾 Guardando cache en storage...');
       await saveUltraCacheToStorage();
       
@@ -1153,28 +1148,28 @@ async function loadUltraCache(forceRebuild = false, progressCallback = null) {
       const qualityText = quality === 'full' ? ' (completo)' : quality === 'partial' ? ' (parcial)' : '';
       
       if (progressCallback) {
-        progressCallback(`✅ Cache ULTRA cargado exitosamente${qualityText}!\n📊 ${processedCount} URLs procesadas\n🌐 ${ULTRA_CACHE.state.totalDomains} dominios únicos\n🎨 Favicons cacheados: ${ULTRA_CACHE.memory.favicons.size}`);
+        progressCallback(`✅ ULTRA cache loaded successfully${qualityText}!\n📊 ${processedCount} URLs processed\n🌐 ${ULTRA_CACHE.state.totalDomains} unique domains\n🎨 Cached favicons: ${ULTRA_CACHE.memory.favicons.size}`);
       }
       
-      console.log(`✅ Cache ULTRA cargado exitosamente (${quality})`, ULTRA_CACHE.state);
+      console.log(`✅ ULTRA cache loaded successfully (${quality})`, ULTRA_CACHE.state);
       
       return { success: true, stats: ULTRA_CACHE.state, quality };
     } else {
-      console.error('❌ Cache ULTRA cargado pero integridad inválida:', integrity);
+      console.error('❌ ULTRA cache loaded but integrity invalid:', integrity);
       ULTRA_CACHE.state.isLoaded = false;
       ULTRA_CACHE.state.integrityValid = false;
       
-      const errorDetails = `Integridad inválida: URLs=${integrity.stats.historySize}, Dominios=${integrity.stats.domainsSize}, Mínimo requerido=${integrity.details.minRequired}`;
+      const errorDetails = `Invalid integrity: URLs=${integrity.stats.historySize}, Domains=${integrity.stats.domainsSize}, Minimum required=${integrity.details.minRequired}`;
       
       if (progressCallback) {
-        progressCallback(`❌ Error: Cache cargado pero integridad inválida\n📊 ${processedCount} URLs procesadas\n🔍 ${errorDetails}`);
+        progressCallback(`❌ Error: Cache loaded but integrity invalid\n📊 ${processedCount} URLs processed\n🔍 ${errorDetails}`);
       }
       
       return { success: false, error: errorDetails, stats: ULTRA_CACHE.state, integrity };
     }
     
   } catch (error) {
-    console.error('❌ Error cargando cache ULTRA:', error);
+    console.error('❌ Error loading ULTRA cache:', error);
     if (progressCallback) progressCallback(`❌ Error: ${error.message}`);
     return { success: false, error: error.message };
   } finally {
@@ -1182,19 +1177,19 @@ async function loadUltraCache(forceRebuild = false, progressCallback = null) {
   }
 }
 
-// Función legacy eliminada - ahora se usa exclusivamente Cache ULTRA
+// Legacy function removed — ULTRA cache is used exclusively now
 
-// ACTUALIZAR CACHE ULTRA cuando se visita una nueva página
+// UPDATE ULTRA CACHE on new page visits
 async function updateUltraCache(url, title) {
   if (!ULTRA_CACHE.state.isLoaded) {
-    return; // No actualizar si no está cargado
+    return; // Don't update when not loaded
   }
   
   try {
     const urlObj = new URL(url);
     const domain = urlObj.hostname.replace('www.', '');
     
-    // Verificar si ya existe en el cache
+    // Check if already in cache
     const existingItem = ULTRA_CACHE.memory.history.get(url);
     
     if (existingItem) {
@@ -1203,7 +1198,7 @@ async function updateUltraCache(url, title) {
       existingItem.visitCount = (existingItem.visitCount || 0) + 1;
       existingItem.title = title;
     } else {
-      // Agregar nueva entrada al cache
+      // Add new entry to cache
       const newItem = {
         url: url,
         title: title,
@@ -1214,14 +1209,14 @@ async function updateUltraCache(url, title) {
       
       ULTRA_CACHE.memory.history.set(url, newItem);
       
-      // Actualizar índices
+      // Update indexes
       if (!ULTRA_CACHE.memory.domains.has(domain)) {
         ULTRA_CACHE.memory.domains.set(domain, []);
         ULTRA_CACHE.state.totalDomains++;
       }
       ULTRA_CACHE.memory.domains.get(domain).push(newItem);
       
-      // Indexar por palabras clave del título
+      // Index by title keywords
       const titleWords = title.toLowerCase().split(/\s+/);
       titleWords.forEach(word => {
         if (word.length > 2 && word.length < 20) {
@@ -1240,13 +1235,13 @@ async function updateUltraCache(url, title) {
       ULTRA_CACHE.state.totalUrls++;
       ULTRA_CACHE.state.lastUpdate = Date.now();
       
-      // Validar integridad después de actualizar
+      // Validate integrity after updating
       validateUltraCacheIntegrity();
       
       console.log(`📝 Cache ULTRA actualizado: ${domain}`);
     }
     
-    // Guardar en storage cada 10 actualizaciones
+    // Save to storage every 10 updates
     if (ULTRA_CACHE.state.totalUrls % 10 === 0) {
       saveUltraCacheToStorage();
     }
@@ -1256,22 +1251,22 @@ async function updateUltraCache(url, title) {
   }
 }
 
-// ACTUALIZAR CACHE GLOBAL cuando se visita una nueva página (LEGACY)
+// UPDATE GLOBAL CACHE on new page visits (LEGACY)
 async function updateGlobalHistoryCache(url, title) {
   if (!isGlobalCacheLoaded) {
-    return; // No actualizar si no está cargado
+    return; // Don't update when not loaded
   }
   
   try {
     const urlObj = new URL(url);
     const domain = urlObj.hostname.replace('www.', '');
     
-    // Buscar si ya existe en el cache
+    // Look up in the cache
     const existingItems = globalHistoryCache.get(domain) || [];
     const existingUrl = existingItems.find(item => item.url === url);
     
     if (!existingUrl) {
-      // Agregar nueva entrada al cache
+      // Add new entry to cache
       const newItem = {
         url: url,
         title: title,
@@ -1282,7 +1277,7 @@ async function updateGlobalHistoryCache(url, title) {
       existingItems.push(newItem);
       globalHistoryCache.set(domain, existingItems);
       
-      // También indexar por palabras clave del título
+      // Also index by title keywords
       const titleWords = title.toLowerCase().split(/\s+/);
       titleWords.forEach(word => {
         if (word.length > 2) {
@@ -1300,7 +1295,7 @@ async function updateGlobalHistoryCache(url, title) {
   }
 }
 
-// OBTENER INFORMACIÓN DEL CACHE GLOBAL
+// GET GLOBAL CACHE INFO
 async function getGlobalCacheInfo() {
   try {
     const stats = await chrome.storage.local.get(['globalCacheStats', 'globalCacheLoaded', 'globalCacheTimestamp']);
@@ -1311,7 +1306,7 @@ async function getGlobalCacheInfo() {
       cacheSize: globalHistoryCache.size,
       stats: stats.globalCacheStats || null,
       lastLoaded: stats.globalCacheTimestamp || null,
-      memoryUsage: globalHistoryCache.size * 0.001 // Estimación aproximada en MB
+      memoryUsage: globalHistoryCache.size * 0.001 // Approximate estimate in MB
     };
     
     return { success: true, cacheInfo };
@@ -1320,7 +1315,7 @@ async function getGlobalCacheInfo() {
   }
 }
 
-// OBTENER DOMINIOS MÁS FRECUENTES
+// GET MOST FREQUENT DOMAINS
 async function getTopDomains(limit = 20) {
   try {
     const domains = [];
@@ -1361,19 +1356,19 @@ async function clearGlobalCache() {
   }
 }
 
-// BÚSQUEDA ULTRA - Función principal de búsqueda
+// ULTRA SEARCH — main search function
 async function searchUltraCache(query, sendResponse) {
   try {
-    // Cargar cache ULTRA si no está cargado o si la integridad es inválida
+    // Load ULTRA cache if not loaded or integrity invalid
     if (!ULTRA_CACHE.state.isLoaded || !ULTRA_CACHE.state.integrityValid) {
-      console.log('🔄 Cache ULTRA no cargado o integridad inválida, cargando automáticamente...');
+      console.log('🔄 ULTRA cache not loaded or integrity invalid, loading automatically...');
       await loadUltraCache();
       
-      // Verificar de nuevo después de cargar
+      // Re-check after loading
       if (!ULTRA_CACHE.state.isLoaded || !ULTRA_CACHE.state.integrityValid) {
         const integrity = validateUltraCacheIntegrity();
-        const errorMsg = `Cache ULTRA no disponible: URLs=${integrity.stats.historySize}, Dominios=${integrity.stats.domainsSize}, Válido=${integrity.valid}`;
-        console.error('❌ Cache ULTRA no se pudo cargar o validar:', errorMsg);
+        const errorMsg = `ULTRA cache unavailable: URLs=${integrity.stats.historySize}, Domains=${integrity.stats.domainsSize}, Valid=${integrity.valid}`;
+        console.error('❌ ULTRA cache could not be loaded or validated:', errorMsg);
         sendResponse({ success: false, error: errorMsg, integrity });
         return;
       }
@@ -1382,23 +1377,23 @@ async function searchUltraCache(query, sendResponse) {
     const queryLower = query.toLowerCase();
     let relevantUrls = [];
     
-    // Búsqueda mejorada para queries cortas (1-2 caracteres)
+    // Enhanced search for short queries (1-2 chars)
     if (query.length <= 2) {
-      // Para queries cortas, buscar más ampliamente
+      // For short queries, search more broadly
       
-      // 1. Buscar por dominio exacto
+      // 1. Search by exact domain
       if (ULTRA_CACHE.memory.domains.has(queryLower)) {
         relevantUrls.push(...ULTRA_CACHE.memory.domains.get(queryLower));
       }
       
-      // 2. Buscar por dominios que empiecen con la query (prioridad alta)
+      // 2. Search by domains starting with the query (high priority)
       for (const [domain, items] of ULTRA_CACHE.memory.domains.entries()) {
         if (domain.startsWith(queryLower) && domain !== queryLower) {
           relevantUrls.push(...items);
         }
       }
       
-      // 3. Buscar por dominios que contengan la query (para queries de 2 caracteres)
+      // 3. Search by domains containing the query (for 2-char queries)
       if (query.length === 2) {
         for (const [domain, items] of ULTRA_CACHE.memory.domains.entries()) {
           if (domain.includes(queryLower) && !domain.startsWith(queryLower)) {
@@ -1407,7 +1402,7 @@ async function searchUltraCache(query, sendResponse) {
         }
       }
       
-      // 4. Buscar por palabras clave del título (solo palabras de 2+ caracteres)
+      // 4. Search by title keywords (only 2+ char words)
       for (const [word, items] of ULTRA_CACHE.memory.words.entries()) {
         if (word.startsWith(queryLower) && word.length >= 2) {
           relevantUrls.push(...items);
@@ -1415,21 +1410,21 @@ async function searchUltraCache(query, sendResponse) {
       }
       
     } else {
-      // Para queries más largas, usar lógica normal
+      // For longer queries, use normal logic
       
-      // Buscar por dominio exacto
+      // Search by exact domain
       if (ULTRA_CACHE.memory.domains.has(queryLower)) {
         relevantUrls.push(...ULTRA_CACHE.memory.domains.get(queryLower));
       }
       
-      // Buscar por dominios que empiecen con la query
+      // Search by domains starting with the query
       for (const [domain, items] of ULTRA_CACHE.memory.domains.entries()) {
         if (domain.startsWith(queryLower) && domain !== queryLower) {
           relevantUrls.push(...items);
         }
       }
       
-      // Buscar por palabras clave del título
+      // Search by title keywords
       for (const [word, items] of ULTRA_CACHE.memory.words.entries()) {
         if (word.startsWith(queryLower) && word.length > 2) {
           relevantUrls.push(...items);
@@ -1451,7 +1446,7 @@ async function searchUltraCache(query, sendResponse) {
     relevantUrls.sort((a, b) => {
       const queryLower = query.toLowerCase();
       
-      // Prioridad máxima: coincidencia exacta en dominio
+      // Top priority: exact domain match
       const domainA = a.domain || '';
       const domainB = b.domain || '';
       const exactMatchA = domainA.startsWith(queryLower);
@@ -1499,7 +1494,7 @@ async function searchUltraCache(query, sendResponse) {
         suggestion = domain;
       }
       
-      // Obtener favicon cacheado
+      // Get cached favicon
       const favicon = getCachedFavicon(domain);
       
       const response = { 
@@ -1519,42 +1514,42 @@ async function searchUltraCache(query, sendResponse) {
     }
     
   } catch (error) {
-    console.error('Error en búsqueda ULTRA:', error);
+    console.error('Error in ULTRA search:', error);
     sendResponse({ success: false, error: error.message });
   }
 }
 
-// Buscar en historial para autocompletado inteligente (CON CACHE GLOBAL) - LEGACY
+// Search history para autocompletado inteligente (CON CACHE GLOBAL) - LEGACY
 async function searchHistoryForAutocomplete(query, sendResponse) {
   try {
     // USAR EXCLUSIVAMENTE CACHE ULTRA - SIEMPRE CARGADO Y PERMANENTE
     if (!ULTRA_CACHE.state.isLoaded || !ULTRA_CACHE.state.integrityValid) {
-      console.log('🔄 Cache ULTRA no cargado o integridad inválida, cargando automáticamente...');
+      console.log('🔄 ULTRA cache not loaded or integrity invalid, loading automatically...');
       await loadUltraCache();
     }
     
-    // Usar la función searchUltraCache que ya está optimizada
+    // Use the already-optimized searchUltraCache
     await searchUltraCache(query, sendResponse);
     return;
     
-    // La función searchUltraCache ya maneja toda la lógica de búsqueda y respuesta
-    // No necesitamos código adicional aquí
+    // searchUltraCache handles all search and response logic
+    // No additional code needed here
   } catch (error) {
     console.error('Error en autocompletado:', error);
     sendResponse({ success: false, error: error.message });
   }
 }
 
-// Set para trackear pestañas creadas por nosotros (evitar bucles)
+// Set to track tabs we created (avoid loops)
 let extensionCreatedTabs = new Set();
 
-// Set para trackear pestañas creadas por CommandBar para navegación (evitar auto-open innecesario)
+// Set to track tabs created by CommandBar for navigation (avoid unnecessary auto-open)
 let commandBarCreatedTabs = new Set();
 
-// Función para verificar si es una pestaña nueva vacía válida
+// Check whether a tab is a valid empty new tab
 function isValidNewTab(tab) {
   
-  // URLs que consideramos "nuevas pestañas vacías"
+  // URLs we consider "empty new tabs"
   const newTabUrls = [
     'chrome://newtab/',
     'chrome://new-tab-page/',
@@ -1563,19 +1558,19 @@ function isValidNewTab(tab) {
     'edge://newtab/'
   ];
   
-  // NUEVA LÓGICA: También considerar nuestras páginas de extensión como válidas
+  // NEW LOGIC: also consider our extension pages valid
   const isOurExtensionPage = tab.url?.includes(chrome.runtime.id) && tab.url?.includes('new_tab.html');
   
-  // Verificar si es una URL válida de nueva pestaña
+  // Verify it's a valid new-tab URL
   const isNewTabUrl = newTabUrls.some(url => tab.url?.startsWith(url)) || !tab.url || tab.url === '' || isOurExtensionPage;
   
-  // Verificar que no sea una pestaña especial (EXCEPTO nuestras páginas)
+  // Make sure it's not a special tab (EXCEPT our pages)
   const isSpecialTab = tab.url?.startsWith('chrome://') && 
                       !tab.url.includes('newtab') && 
                       !tab.url.includes('new-tab-page') &&
                       !tab.url.includes('welcome');
   
-  // Las páginas de extensión son válidas SOLO si son nuestras
+  // Extension pages are valid ONLY if they are ours
   const isExtensionTab = tab.url?.startsWith('chrome-extension://') && !isOurExtensionPage;
   
   const isDevToolsTab = tab.url?.startsWith('devtools://');
@@ -1585,19 +1580,19 @@ function isValidNewTab(tab) {
   return result;
 }
 
-// Función para auto-abrir CommandBar en nueva pestaña
+// Auto-open CommandBar in a new tab
 async function autoOpenCommandBarInNewTab(tabId, delay = 100) {
   try {
     
-    // Verificar que la pestaña aún existe y está activa
+    // Verify the tab still exists and is active
     const tab = await chrome.tabs.get(tabId);
     if (!tab || !tab.active) {
-      return; // No abrir si la pestaña ya no está activa
+      return; // Don't open if the tab is no longer active
     }
     
-    // Verificar que sigue siendo una pestaña nueva válida
+    // Verify it is still a valid new tab
     if (!isValidNewTab(tab)) {
-      return; // El usuario ya navegó a algún lugar
+      return; // The user already navigated away
     }
     
     
@@ -1605,62 +1600,62 @@ async function autoOpenCommandBarInNewTab(tabId, delay = 100) {
     setTimeout(async () => {
       try {
         
-        // Verificar nuevamente que la pestaña sigue válida
+        // Re-check that the tab is still valid
         const currentTab = await chrome.tabs.get(tabId);
         if (!currentTab || !currentTab.active || !isValidNewTab(currentTab)) {
           return;
         }
         
         
-        // OPTIMIZACIÓN: Si es nuestra página de extensión, usar lógica simplificada
+        // OPTIMIZATION: if it is our extension page, use simplified logic
         const isOurExtensionPage = currentTab.url?.includes(chrome.runtime.id) && currentTab.url?.includes('new_tab.html');
         
         if (isOurExtensionPage) {
-          return; // No hacer nada, la página se maneja a sí misma
+          return; // Do nothing — the page handles itself
         }
         
-        // Verificar si es una página chrome:// que no admite content scripts
+        // Check whether it is a chrome:// page that doesn't allow content scripts
         const isChromeInternalPage = currentTab.url?.startsWith('chrome://') || 
                                    currentTab.url?.startsWith('chrome-extension://') ||
                                    currentTab.url?.startsWith('edge://');
         
         if (isChromeInternalPage) {
           
-          // MÉTODO ALTERNATIVO: Crear nueva pestaña con página de la extensión
+          // ALTERNATE METHOD: create a new tab with the extension page
           try {
-            // Usar página HTML de la extensión en lugar de about:blank
+            // Use the extension's HTML page instead of about:blank
             const extensionUrl = chrome.runtime.getURL('new_tab.html');
             const newTab = await chrome.tabs.create({ 
               url: extensionUrl, 
               active: true 
             });
             
-            // IMPORTANTE: Marcar esta pestaña como creada por nosotros para evitar bucle
+            // IMPORTANT: mark this tab as created by us to avoid loops
             extensionCreatedTabs.add(newTab.id);
             
-            // Cerrar la pestaña chrome:// original
+            // Close the original chrome:// tab
             await chrome.tabs.remove(tabId);
             
-            // Esperar un momento para que la página de extensión cargue
+            // Wait briefly for the extension page to load
             setTimeout(async () => {
               try {
                 await chrome.tabs.sendMessage(newTab.id, { action: 'toggle_commandbar' });
               } catch (error) {
-                console.error('❌ Content script aún no disponible, intentando inyección...');
+                console.error('❌ Content script not yet available, trying injection...');
                 const injected = await forceInjectCommandBar(newTab.id, 'toggle_commandbar');
                 if (injected) {
-                  // Éxito silencioso
+                  // Silent success
                 } else {
-                  console.error('❌ Inyección también falló en página de extensión - Esto es muy raro, reintentando...');
+                  console.error('❌ Injection also failed on extension page — very unusual, retrying...');
                   
-                  // Último recurso: Esperar más tiempo y reintentar
+                  // Last resort: wait longer and retry
                   setTimeout(async () => {
                     try {
                       const finalInjected = await forceInjectCommandBar(newTab.id, 'toggle_commandbar');
                       if (finalInjected) {
-                        // Éxito silencioso en reintento
+                        // Silent success en reintento
                       } else {
-                        console.error('❌ Todos los intentos fallaron para página de extensión');
+                        console.error('❌ All attempts failed for extension page');
                       }
                     } catch (finalError) {
                       console.error('❌ Error en reintento final:', finalError);
@@ -1668,86 +1663,86 @@ async function autoOpenCommandBarInNewTab(tabId, delay = 100) {
                   }, 1000);
                 }
                 
-                // Limpiar marca después de un tiempo
+                // Clear the mark after some time
                 setTimeout(() => {
                   extensionCreatedTabs.delete(newTab.id);
                 }, 5000);
               }
-            }, 50); // Tiempo reducido para transición más rápida
+            }, 50); // Shorter delay for a faster transition
             
           } catch (error) {
-            console.error('❌ Error creando pestaña de extensión alternativa:', error);
+            console.error('❌ Error creating alternative extension tab:', error);
           }
           
         } else {
-          // Método normal para páginas regulares
+          // Normal method for regular pages
           try {
             await chrome.tabs.sendMessage(tabId, { action: 'toggle_commandbar' });
           } catch (error) {
-            // Si falla el content script, intentar inyección forzada
-            console.error('❌ Content script falló, intentando inyección forzada:', error.message);
+            // If the content script fails, try forced injection
+            console.error('❌ Content script failed, trying forced injection:', error.message);
             const injected = await forceInjectCommandBar(tabId, 'toggle_commandbar');
             if (injected) {
-              // Éxito silencioso
+              // Silent success
             } else {
-              console.error('❌ Inyección forzada también falló');
+              console.error('❌ Forced injection also failed');
             }
           }
         }
         
       } catch (error) {
-        // La pestaña ya no existe o hubo otro error
-        console.error('❌ Error durante la ejecución post-delay:', error);
+        // The tab no longer exists or another error occurred
+        console.error('❌ Error during post-delay execution:', error);
       }
     }, delay);
     
   } catch (error) {
-    console.error('❌ Error verificando nueva pestaña:', error);
+    console.error('❌ Error checking new tab:', error);
   }
 }
 
-// Listener para nuevas pestañas creadas
+// Listener for newly created tabs
 chrome.tabs.onCreated.addListener(async (tab) => {
   try {
     
-    // PREVENIR BUCLE: Si esta pestaña fue creada por nosotros, saltear auto-open
+    // PREVENT LOOP: if this tab was created by us, skip auto-open
     if (extensionCreatedTabs.has(tab.id)) {
       return;
     }
     
-    // PREVENIR AUTO-OPEN INNECESARIO: Si esta pestaña fue creada por CommandBar para navegación, saltear auto-open
+    // PREVENT UNNECESSARY AUTO-OPEN: if this tab was created by CommandBar for navigation, skip auto-open
     if (commandBarCreatedTabs.has(tab.id)) {
       return;
     }
     
-    // Verificar si la función experimental está habilitada
+    // Check whether the experimental feature is enabled
     let { autoOpenNewTab, autoOpenDelay } = await chrome.storage.sync.get(['autoOpenNewTab', 'autoOpenDelay']);
     
-    // SOLUCIÓN: Si los valores son undefined, usar defaults y guardar
+    // FIX: If values are undefined, use defaults and persist
     if (autoOpenNewTab === undefined || autoOpenDelay === undefined) {
       
       // Establecer valores por defecto
       autoOpenNewTab = autoOpenNewTab !== undefined ? autoOpenNewTab : false;
       autoOpenDelay = autoOpenDelay !== undefined ? autoOpenDelay : 100;
       
-      // Guardar en storage para futuras referencias
+      // Save to storage para futuras referencias
       await chrome.storage.sync.set({ autoOpenNewTab, autoOpenDelay });
     }
     
     if (!autoOpenNewTab) {
-      return; // Función desactivada
+      return; // Feature disabled
     }
     
-    // Verificar si es una pestaña nueva válida
+    // Verify it is a valid new tab
     const isValid = isValidNewTab(tab);
     
     if (!isValid) {
-      return; // No es una pestaña nueva vacía
+      return; // Not an empty new tab
     }
     
-    // Solo abrir si la pestaña está activa (es la pestaña actual)
+    // Only open if the tab is active (is the current tab)
     if (!tab.active) {
-      return; // No interferir con pestañas en background
+      return; // Don't interfere with background tabs
     }
     
     // Auto-abrir CommandBar con el delay configurado
@@ -1755,9 +1750,9 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     await autoOpenCommandBarInNewTab(tab.id, delay);
     
   } catch (error) {
-    console.error('❌ Error en auto-apertura de nueva pestaña:', error);
+    console.error('❌ Error in new-tab auto-open:', error);
   }
 });
 
-// Trackear uso de la página de opciones (ejecutar al cargar)
+// Track options-page usage (ejecutar al cargar)
 trackOptionsPageOpened(); 

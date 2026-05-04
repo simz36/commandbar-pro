@@ -1,458 +1,8 @@
-// Sistema de internacionalización para CommandBar Pro
+// Internationalization system for CommandBar Pro
 class I18n {
   constructor() {
-    this.currentLanguage = 'es'; // Por defecto español
+    this.currentLanguage = 'en';
     this.translations = {
-      es: {
-        // Interfaz principal
-        appName: 'CommandBar Pro',
-        appDescription: 'Command Bar avanzada para Chrome inspirada en Arc Browser',
-        
-        // Placeholders y textos del input
-        searchPlaceholder: 'Escribe una búsqueda/URL o activa comandos con / ...',
-        editUrlPlaceholder: 'Editar URL actual',
-        
-        // Comandos
-        commands: {
-          newTab: 'Nueva Pestaña',
-          newWindow: 'Nueva Ventana',
-          incognito: 'Ventana Incógnito',
-          pinTab: 'Pinear Pestaña',
-          closeTab: 'Cerrar Pestaña',
-          duplicateTab: 'Duplicar Pestaña',
-          reload: 'Recargar Página',
-          bookmarks: 'Mostrar Marcadores',
-          history: 'Mostrar Historial',
-          downloads: 'Mostrar Descargas',
-          settings: 'Abrir Configuración',
-          extensions: 'Gestionar Extensiones',
-          readerMode: 'Activar Modo Lectura',
-          developerMode: 'Modo Desarrollador'
-        },
-        
-        // Descripciones de comandos
-        commandDescs: {
-          newTab: 'Crear nueva pestaña',
-          newWindow: 'Crear nueva ventana',
-          incognito: 'Ventana incógnito',
-          pinTab: 'Pinear pestaña actual',
-          closeTab: 'Cerrar pestaña actual',
-          duplicateTab: 'Duplicar pestaña actual',
-          reload: 'Recargar página',
-          bookmarks: 'Mostrar marcadores',
-          history: 'Mostrar historial',
-          downloads: 'Mostrar descargas',
-          settings: 'Abrir configuración',
-          extensions: 'Gestionar extensiones',
-          readerMode: 'Activar modo lectura',
-          developerMode: 'Modo desarrollador'
-        },
-        
-        // Secciones
-        sections: {
-          quickCommands: 'Comandos Rápidos',
-          quickAccess: 'Acceso Rápido',
-          availableCommands: 'Comandos Disponibles',
-          webSearch: 'Búsqueda Web',
-          navigation: 'Navegación',
-          openTabs: 'Pestañas Abiertas',
-          bookmarks: 'Marcadores',
-          history: 'Historial',
-          autocomplete: 'Autocompletado'
-        },
-        
-        // Búsquedas
-        search: {
-          searchInGoogle: 'Buscar "{query}" en Google',
-          searchInBing: 'Buscar "{query}" en Bing',
-          searchInDuckDuckGo: 'Buscar "{query}" en DuckDuckGo',
-          searchInYahoo: 'Buscar "{query}" en Yahoo',
-          searchInPerplexity: 'Buscar "{query}" en Perplexity',
-          goToUrl: 'Ir a {url}',
-          openInNewTab: 'Abrir en nueva pestaña',
-          noResults: 'No se encontraron comandos'
-        },
-        
-        // Hints y ayuda
-        hints: {
-          pressEnter: 'Presiona Enter',
-          pressTab: 'Presiona Tab',
-          editMode: 'Modo Edición - Todas las acciones se abren en esta pestaña'
-        },
-        
-        // Acciones
-        actions: {
-          open: 'Abrir',
-          openInNewTab: 'Abrir en Nueva Pestaña',
-          openInBackground: 'Abrir en Segundo Plano',
-          close: 'Cerrar',
-          pin: 'Pinear',
-          duplicate: 'Duplicar'
-        },
-        
-        // Support section
-        support: {
-          title: '☕ Apoya el Desarrollo',
-          message: 'Esta extensión ha sido desarrollada con cariño, y todas sus funciones son totalmente gratuitas. Desde lo más mínimo, puedes ayudarme a seguir manteniendo y actualizando la extensión, sería de gran ayuda.',
-          buyMeACoffee: 'Comprar un Café',
-          thankYou: 'Gracias por tu apoyo ❤️'
-        },
-        
-        // Cache management
-            cache: {
-      title: '⚡ Cache ULTRA',
-      status: {
-        title: 'Estado del Cache ULTRA',
-        description: 'Sistema de cache permanente con favicons precargados',
-        state: 'Estado:',
-        urls: 'URLs en cache:',
-        domains: 'Dominios únicos:',
-        favicons: 'Favicons cacheados:',
-        lastUpdate: 'Última actualización:',
-        memory: 'Uso de memoria:',
-        autoUpdate: 'Auto-actualización:'
-      },
-      actions: {
-        title: 'Acciones de Cache ULTRA',
-        description: 'Gestiona el sistema de cache avanzado',
-        rebuild: 'Cargar Cache ULTRA',
-        clear: 'Limpiar Cache',
-        viewTopDomains: 'Ver Dominios Top',
-        stats: 'Estadísticas'
-      },
-      config: {
-        title: 'Configuración Avanzada',
-        description: 'Ajusta el comportamiento del cache ULTRA'
-      },
-      progress: {
-        title: 'Progreso de Carga ULTRA',
-        description: 'Procesando historial completo...'
-      },
-      topDomains: {
-        title: 'Dominios Más Visitados',
-        description: 'Los sitios web más frecuentes en tu historial'
-      },
-      stats: {
-        title: 'Estadísticas Detalladas',
-        description: 'Información completa del rendimiento del cache'
-      }
-    },
-
-        // Popup
-        popup: {
-          version: 'v1.4.0',
-          keyboardShortcuts: 'Atajos de Teclado',
-          openCommandBar: 'Abrir Command Bar',
-          developerMode: 'Modo desarrollador',
-          features: 'Funcionalidades',
-          availableCommands: 'Comandos Disponibles',
-          searchTypes: 'Tipos de Búsqueda',
-          configuration: 'Configuración',
-          tryCommandBar: 'Probar Command Bar',
-          advancedSettings: 'Configuración Avanzada',
-          changeLanguage: 'Configurar Idioma',
-          
-          // Mensajes del popup
-          messages: {
-            openOptionsManually: 'Abre las opciones de la extensión para cambiar el idioma'
-          },
-          
-          // Características
-          featureItems: {
-            universalSearch: 'Búsqueda Universal',
-            quickNavigation: 'Navegación Rápida',
-            tabManagement: 'Gestión de Pestañas',
-            bookmarkAccess: 'Acceso a Marcadores',
-            historySearch: 'Búsqueda en Historial',
-            quickCommands: 'Comandos Rápidos'
-          },
-          
-          // Tipos de búsqueda
-          searchTypeItems: {
-            webSearch: {
-              title: 'Búsqueda Web',
-              desc: 'Busca en Google, Bing o DuckDuckGo'
-            },
-            directNavigation: {
-              title: 'Navegación Directa',
-              desc: 'Escribe una URL para navegar'
-            },
-            openTabs: {
-              title: 'Pestañas Abiertas',
-              desc: 'Busca y cambia entre pestañas'
-            },
-            bookmarks: {
-              title: 'Marcadores',
-              desc: 'Busca en tus marcadores guardados'
-            },
-            history: {
-              title: 'Historial',
-              desc: 'Busca en tu historial de navegación'
-            }
-          },
-          
-          // Configuración
-          settings: {
-            darkTheme: 'Tema Oscuro'
-          },
-          
-          // Tips
-          tips: {
-            useSlash: 'Usa "/" al inicio para comandos específicos',
-            directUrl: 'Escribe una URL para navegación directa'
-          },
-          
-          // Comandos específicos
-          commands: {
-            newTab: 'nueva pestaña',
-            newTabDesc: 'Crear nueva pestaña',
-            pin: 'pinear',
-            pinDesc: 'Pinear pestaña actual',
-            close: 'cerrar',
-            closeDesc: 'Cerrar pestaña actual',
-            duplicate: 'duplicar',
-            duplicateDesc: 'Duplicar pestaña actual',
-            bookmarks: 'marcadores',
-            bookmarksDesc: 'Mostrar marcadores',
-            history: 'historial',
-            historyDesc: 'Mostrar historial'
-          }
-        },
-        
-        // Opciones
-        options: {
-          title: 'CommandBar Pro - Opciones',
-          subtitle: 'Configuración Avanzada',
-          
-          // Secciones principales
-          generalSettings: 'Configuración General',
-          searchAndResults: 'Búsqueda y Resultados',
-          keyboardShortcuts: 'Atajos de Teclado',
-          privacyAndData: 'Privacidad y Datos',
-          language: 'Idioma',
-          
-          // Configuración general
-          general: {
-            interfaceTheme: 'Tema de Interfaz',
-            interfaceThemeDesc: 'Selecciona el tema visual de CommandBar',
-            animationSpeed: 'Velocidad de Animaciones',
-            animationSpeedDesc: 'Controla la velocidad de las transiciones',
-            maxResults: 'Máximo de Resultados',
-            maxResultsDesc: 'Número máximo de sugerencias por categoría',
-            
-            themeOptions: {
-              auto: 'Automático (Sistema)',
-              light: 'Claro',
-              dark: 'Oscuro'
-            },
-            
-            animationOptions: {
-              slow: 'Lenta',
-              normal: 'Normal',
-              fast: 'Rápida',
-              none: 'Sin animaciones'
-            }
-          },
-          
-          // Búsqueda
-          searchSettings: {
-            searchSources: 'Fuentes de Búsqueda',
-            searchSourcesDesc: 'Selecciona dónde buscar resultados',
-            searchDelay: 'Retraso de Búsqueda (ms)',
-            searchDelayDesc: 'Tiempo de espera antes de ejecutar búsqueda',
-            searchDelayRecommended: 'Recomendado',
-            defaultSearchEngine: 'Buscador por Defecto',
-            defaultSearchEngineDesc: 'Motor de búsqueda para consultas web',
-            
-            sources: {
-              openTabs: 'Pestañas Abiertas',
-              bookmarks: 'Marcadores',
-              history: 'Historial'
-            },
-            
-            engines: {
-              google: 'Google',
-              bing: 'Bing',
-              duckduckgo: 'DuckDuckGo',
-              yahoo: 'Yahoo'
-            }
-          },
-          
-          // Atajos de teclado
-          keyboard: {
-            mainShortcuts: 'Atajos Principales',
-            mainShortcutsDesc: 'Combinaciones de teclado para CommandBar',
-            openCommandBar: 'Abrir Command Bar',
-            editCurrentUrl: 'Editar URL actual',
-            developerMode: 'Modo desarrollador',
-            additionalConfig: 'Configuración Adicional',
-            additionalConfigDesc: 'Personaliza el comportamiento de los atajos',
-            preventSiteShortcuts: 'Prevenir atajos del sitio web',
-            changeShortcut: 'Cambiar',
-            resetShortcut: 'Restablecer',
-            recordingPrompt: 'Presiona tu atajo...',
-            pressEscapeToCancel: 'Presiona Escape para cancelar',
-            shortcutSaved: 'Atajo guardado correctamente',
-            shortcutReset: 'Atajo restablecido al valor por defecto',
-            shortcutConflict: 'Este atajo ya está asignado a otra acción',
-            shortcutInvalid: 'Se requiere al menos una tecla modificadora y una tecla regular',
-            shortcutReserved: 'Este atajo está reservado por el navegador'
-          },
-
-          // Sitios web excluidos
-          excludedWebsites: {
-            title: 'Sitios Web Excluidos',
-            description: 'CommandBar se desactivará en los sitios que coincidan con estos patrones',
-            inputPlaceholder: 'Ingresa un patrón de URL (soporta regex)',
-            addButton: 'Agregar',
-            noPatterns: 'No hay patrones configurados',
-            examples: 'Ejemplos: .*\\.google\\.com, https://mail\\..*',
-            invalidRegex: 'Patrón de expresión regular inválido',
-            patternAdded: 'Patrón agregado correctamente',
-            patternRemoved: 'Patrón eliminado correctamente',
-            duplicatePattern: 'Este patrón ya existe'
-          },
-
-          // Privacidad
-          privacy: {
-            dataCollection: 'Recopilación de Datos',
-            dataCollectionDesc: 'Control sobre qué datos se almacenan localmente',
-            dataCleanup: 'Limpieza de Datos',
-            dataCleanupDesc: 'Gestionar datos almacenados',
-            usageStats: 'Estadísticas de uso (local)',
-            
-            // Acciones de privacidad
-            actions: {
-              clearCache: 'Limpiar Cache',
-              clearStats: 'Limpiar Estadísticas',
-              resetAll: 'Restablecer Todo'
-            },
-            
-            statsViewer: 'Estadísticas Recopiladas',
-            statsViewerDesc: 'Visualiza las estadísticas de uso almacenadas localmente',
-            viewStats: 'Ver Estadísticas',
-            refreshStats: 'Actualizar',
-            noStats: 'No hay estadísticas disponibles',
-            statsEmpty: 'Activa la recopilación de datos para ver estadísticas',
-            
-            actions: {
-              open: 'Abrir',
-              openInNewTab: 'Abrir en Nueva Pestaña',
-              openInBackground: 'Abrir en Segundo Plano',
-              close: 'Cerrar',
-              pin: 'Pinear',
-              duplicate: 'Duplicar'
-            },
-            
-            // Etiquetas de estadísticas
-            statsLabels: {
-              commandbar_opened: 'CommandBar abierto',
-              search_performed: 'Búsquedas realizadas',
-              action_executed: 'Acciones ejecutadas',
-              keyboard_command: 'Comandos de teclado',
-              url_edit_mode: 'Modo edición URL',
-              options_page_opened: 'Página de opciones abierta',
-              today: 'Hoy',
-              yesterday: 'Ayer',
-              total: 'Total',
-              last7days: 'Últimos 7 días',
-              last30days: 'Últimos 30 días'
-            }
-          },
-          
-          // Idioma
-          languageSettings: {
-            interfaceLanguage: 'Idioma de la Interfaz',
-            interfaceLanguageDesc: 'Selecciona el idioma de CommandBar',
-            languages: {
-              es: 'Español',
-              en: 'English'
-            }
-          },
-          
-          // Botones
-          buttons: {
-            exportSettings: 'Exportar Configuración',
-            importSettings: 'Importar Configuración',
-            saveChanges: 'Guardar Cambios',
-            cancel: 'Cancelar',
-            confirm: 'Confirmar'
-          },
-          
-          // Footer
-          footer: {
-            version: 'CommandBar Pro v1.4.0',
-            changelog: 'Registro de cambios',
-            reportBug: 'Reportar bug',
-            viewSource: 'Ver código fuente'
-          },
-          
-          // Mensajes
-          messages: {
-            settingsLoaded: 'Configuración cargada correctamente',
-            settingsSaved: 'Configuración guardada correctamente',
-            cacheCleared: 'Cache limpiado correctamente',
-            statsCleared: 'Estadísticas limpiadas correctamente',
-            settingsReset: 'Configuración restablecida correctamente',
-            settingsExported: 'Configuración exportada correctamente',
-            settingsImported: 'Configuración importada correctamente',
-            invalidFile: 'Error: Archivo de configuración inválido',
-            themeChanged: 'Tema cambiado a: {theme}',
-            languageChanged: 'Idioma cambiado a: {language}',
-            
-            errors: {
-              loadingSettings: 'Error cargando configuración',
-              savingSettings: 'Error guardando configuración',
-              clearingCache: 'Error limpiando cache',
-              clearingStats: 'Error limpiando estadísticas',
-              resettingSettings: 'Error restableciendo configuración',
-              importingSettings: 'Error importando configuración'
-            }
-          },
-          
-          // Confirmaciones
-          confirmations: {
-            clearCache: {
-              title: 'Limpiar Cache',
-              message: '¿Estás seguro de que quieres limpiar todo el cache? Esto eliminará los resultados de búsqueda guardados.'
-            },
-            clearStats: {
-              title: 'Limpiar Estadísticas',
-              message: '¿Estás seguro de que quieres limpiar todas las estadísticas de uso?'
-            },
-            resetAll: {
-              title: 'Restablecer Todo',
-              message: '¿Estás seguro de que quieres restablecer toda la configuración? Esta acción no se puede deshacer.'
-            }
-          }
-        },
-        
-        // Funciones experimentales
-        experimental: {
-          title: 'Funciones Experimentales',
-          warning: 'Las funciones experimentales están en desarrollo y pueden cambiar en futuras versiones. Úsalas bajo tu propia responsabilidad.',
-          autoOpenNewTab: 'Auto-abrir en Nueva Pestaña',
-          autoOpenNewTabDesc: 'Abrir CommandBar completo automáticamente al crear nuevas pestañas vacías (Ctrl+T, botón +). Incluye todas las funciones: búsqueda en pestañas, marcadores, historial y autocompletado inteligente.',
-          autoOpenEnabled: 'Activar auto-apertura',
-          autoOpenDelay: 'Retraso de Auto-apertura (ms)',
-          autoOpenDelayDesc: 'Tiempo de espera antes de abrir CommandBar (100ms recomendado para transición rápida)',
-          quickTest: 'Prueba Rápida',
-          quickTestDesc: 'Verifica si la configuración experimental está funcionando correctamente',
-          testAutoOpen: 'Probar Auto-apertura',
-          checkConfig: 'Verificar Config',
-          forceSave: 'Forzar Guardado',
-          testLanguage: 'Test Idioma'
-        },
-        
-        // Toasts y notificaciones
-        notifications: {
-          success: 'Éxito',
-          error: 'Error',
-          warning: 'Advertencia',
-          info: 'Información'
-        }
-      },
-      
       en: {
         // Main interface
         appName: 'CommandBar Pro',
@@ -538,14 +88,6 @@ class I18n {
           close: 'Close',
           pin: 'Pin',
           duplicate: 'Duplicate'
-        },
-        
-        // Support section
-        support: {
-          title: '☕ Support Development',
-          message: 'This extension has been developed with love, and all its features are completely free. Even the smallest contribution can help me continue maintaining and updating the extension, it would be of great help.',
-          buyMeACoffee: 'Buy me a Coffee',
-          thankYou: 'Thank you for your support ❤️'
         },
         
         // Cache management
@@ -810,16 +352,6 @@ class I18n {
             }
           },
           
-          // Language
-          languageSettings: {
-            interfaceLanguage: 'Interface Language',
-            interfaceLanguageDesc: 'Select CommandBar language',
-            languages: {
-              es: 'Español',
-              en: 'English'
-            }
-          },
-          
           // Buttons
           buttons: {
             exportSettings: 'Export Settings',
@@ -904,23 +436,21 @@ class I18n {
       }
     };
     
-    // Cargar idioma guardado
+    // Load saved language
     this.loadLanguage();
   }
-  
+
   async loadLanguage() {
     try {
       const lang = await this.getStoredLanguage();
-      
+
       if (this.translations[lang]) {
         this.currentLanguage = lang;
       } else {
-        // Error silencioso, usar idioma por defecto
-        this.currentLanguage = this.defaultLanguage;
+        this.currentLanguage = 'en';
       }
     } catch (error) {
-      // Error silencioso, usar idioma por defecto
-      this.currentLanguage = this.defaultLanguage;
+      this.currentLanguage = 'en';
     }
   }
   
@@ -938,31 +468,21 @@ class I18n {
   t(key, replacements = {}) {
     const keys = key.split('.');
     let value = this.translations[this.currentLanguage];
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        // Fallback a español si no existe la clave en inglés
-        value = this.translations['es'];
-        for (const fallbackK of keys) {
-          if (value && typeof value === 'object' && fallbackK in value) {
-            value = value[fallbackK];
-          } else {
-            return key; // Devolver la clave si no se encuentra
-          }
-        }
-        break;
+        return key;
       }
     }
-    
-    // Reemplazar variables en el texto
+
     if (typeof value === 'string') {
       for (const [placeholder, replacement] of Object.entries(replacements)) {
         value = value.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), replacement);
       }
     }
-    
+
     return value;
   }
   
@@ -975,7 +495,7 @@ class I18n {
   }
 }
 
-// Instancia global
+// Global instance
 const i18n = new I18n();
 
 // Para uso en otros archivos

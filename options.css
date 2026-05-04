@@ -1,4 +1,4 @@
-/* Estilos para la página de opciones de CommandBar Pro */
+/* Styles for the CommandBar Pro options page */
 
 * {
   margin: 0;
@@ -72,93 +72,6 @@ body {
   gap: 3rem;
   max-width: 900px;
   margin: 0 auto;
-}
-
-/* Support Section */
-.support-section {
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-  border: 2px solid rgba(255, 193, 7, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.support-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: floatingSparks 8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes floatingSparks {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(10px, -10px) rotate(120deg); }
-  66% { transform: translate(-5px, 5px) rotate(240deg); }
-}
-
-.support-content {
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.support-section .support-title {
-  color: #8b4513 !important;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
-  margin-bottom: 1.5rem;
-}
-
-.support-message {
-  color: #5d4037;
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  font-weight: 500;
-  text-shadow: 0.5px 0.5px 1px rgba(255,255,255,0.7);
-}
-
-.coffee-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: linear-gradient(45deg, #6f4e37, #8b4513);
-  color: white;
-  padding: 14px 24px;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(111, 78, 55, 0.3);
-  border: 2px solid rgba(255,255,255,0.2);
-  position: relative;
-  z-index: 1;
-}
-
-.coffee-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(111, 78, 55, 0.4);
-  background: linear-gradient(45deg, #8b4513, #a0522d);
-  text-decoration: none;
-  color: white;
-}
-
-.coffee-btn:active {
-  transform: translateY(0);
-}
-
-.coffee-icon {
-  font-size: 18px;
-  animation: steam 2s ease-in-out infinite;
-}
-
-@keyframes steam {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-1px) rotate(2deg); }
 }
 
 /* Sections */
@@ -646,7 +559,7 @@ body {
   font-weight: 500;
 }
 
-/* Sección experimental */
+/* Experimental section */
 .experimental-section {
   border: 2px solid #FCD34D;
   background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
@@ -711,7 +624,7 @@ body {
   50% { transform: scale(1.05); }
 }
 
-/* Estilos específicos para el badge ULTRA */
+/* ULTRA badge specific styles */
 .beta-badge:contains("ULTRA") {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
@@ -729,7 +642,7 @@ body {
   }
 }
 
-/* Dark theme para sección experimental */
+/* Dark theme for the experimental section */
 @media (prefers-color-scheme: dark) {
   body {
     background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
@@ -743,32 +656,6 @@ body {
   .option-section {
     background: #2d2d2d;
     border-color: #404040;
-  }
-  
-  /* Support Section - Dark Theme */
-  .support-section {
-    background: linear-gradient(135deg, #3d2914 0%, #5d4037 100%) !important;
-    border-color: rgba(255, 193, 7, 0.4) !important;
-  }
-  
-  .support-section .support-title {
-    color: #ffcc80 !important;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-  }
-  
-  .support-message {
-    color: #d7ccc8 !important;
-    text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.7);
-  }
-  
-  .coffee-btn {
-    background: linear-gradient(45deg, #8d6e63, #a1887f) !important;
-    border-color: rgba(255,255,255,0.3) !important;
-  }
-  
-  .coffee-btn:hover {
-    background: linear-gradient(45deg, #a1887f, #bcaaa4) !important;
-    color: white !important;
   }
   
   .option-section:hover {
@@ -935,7 +822,7 @@ body {
   }
 }
 
-/* Estilos para la sección de Cache ULTRA */
+/* ULTRA cache section styles */
 .cache-status {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border: 2px solid #667eea;

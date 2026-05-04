@@ -1,49 +1,39 @@
-// JavaScript para el Popup de CommandBar Pro
-// JavaScript para el Popup de CommandBar Pro
+// JavaScript for the CommandBar Pro popup
 
 document.addEventListener('DOMContentLoaded', async function() {
   try {
-    // Esperar a que i18n se inicialice completamente
     await i18n.loadLanguage();
-    
-    // Pequeño delay para asegurar que el DOM esté completamente listo
+
     await new Promise(resolve => setTimeout(resolve, 50));
-    
+
     initializePopup();
     await loadSettings();
     setupEventListeners();
-    
-    // Fallback: re-intentar traducción después de 1 segundo para elementos que pueden no haberse encontrado
+
     setTimeout(() => {
       updateInterface();
     }, 1000);
-    
+
   } catch (error) {
     console.error('Error during popup initialization:', error);
   }
 });
 
-// Detectar si es macOS
 function isMacOS() {
   return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 }
 
-// Inicializar el popup
 function initializePopup() {
-  // Agregar efectos de entrada escalonados
   const animatedElements = document.querySelectorAll('.feature-item, .command-item, .search-type, .setting-item');
   animatedElements.forEach((element, index) => {
     element.style.animationDelay = `${index * 0.05}s`;
   });
-  
-  // Actualizar atajos de teclado según la plataforma
+
   updateKeyboardShortcuts();
-  
-  // Mostrar tip del día
+
   showDailyTip();
 }
 
-// Actualizar atajos de teclado según la plataforma
 async function updateKeyboardShortcuts() {
   const isMac = isMacOS();
   const modifierKey = isMac ? 'Cmd' : 'Ctrl';
@@ -73,7 +63,7 @@ async function updateKeyboardShortcuts() {
       : `<kbd class="key">${modifierKey}</kbd> + <kbd class="key">K</kbd>`;
     shortcutDisplays[0].innerHTML = `
       ${toggleDisplay}
-      <span class="shortcut-desc" id="popup-open-commandbar">Abrir Command Bar</span>
+      <span class="shortcut-desc" id="popup-open-commandbar">Open Command Bar</span>
     `;
   }
 
@@ -83,107 +73,86 @@ async function updateKeyboardShortcuts() {
       : `<kbd class="key">${modifierKey}</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>`;
     shortcutDisplays[1].innerHTML = `
       ${editDisplay}
-      <span class="shortcut-desc" id="popup-edit-current-url">Editar URL actual</span>
+      <span class="shortcut-desc" id="popup-edit-current-url">Edit current URL</span>
     `;
   }
 }
 
-// Función para obtener configuración del usuario
 async function loadSettings() {
   try {
     const stored = await chrome.storage.sync.get([
-      'language', 
+      'language',
       'darkMode',
       'storeUsageStats'
     ]);
-    
-    // Usar configuración guardada o valores por defecto
+
     userSettings = {
-      language: stored.language || 'es',
+      language: stored.language || 'en',
       darkMode: stored.darkMode || false,
       storeUsageStats: stored.storeUsageStats || false
     };
 
-    // Aplicar configuración de tema
     if (userSettings.darkMode) {
       document.body.classList.add('dark-theme');
     }
 
-    // Verificar idioma y cargar i18n si es necesario
     if (window.i18n) {
       await window.i18n.setLanguage(userSettings.language);
     }
 
   } catch (error) {
     console.error('Error loading settings:', error);
-    // Usar valores por defecto si hay error
     userSettings = {
-      language: 'es',
+      language: 'en',
       darkMode: false,
       storeUsageStats: false
     };
   }
 }
 
-// Configurar event listeners
 function setupEventListeners() {
-  // Botón para probar Command Bar
   document.getElementById('test-commandbar').addEventListener('click', testCommandBar);
-  
-  // Botón de configuración avanzada
+
   document.getElementById('open-options').addEventListener('click', openOptions);
-  
-  // Botón de cambiar idioma
-  document.getElementById('change-language').addEventListener('click', changeLanguage);
-  
-  // Checkboxes de configuración
+
   const checkboxes = document.querySelectorAll('.setting-checkbox');
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener('change', handleSettingChange);
   });
-  
-  // Efectos hover mejorados
+
   setupHoverEffects();
 }
 
-// Probar Command Bar
 async function testCommandBar() {
   try {
-    // Obtener la pestaña activa
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs[0]) {
       const url = tabs[0].url;
-      
-      // Verificar si es una URL válida para content scripts
-      if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || 
+
+      if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') ||
           url.startsWith('edge://') || url.startsWith('about:') ||
           url.includes('chrome.google.com/webstore')) {
-        showNotification('⚠️ CommandBar no funciona en páginas del navegador. Prueba en cualquier sitio web.', 'warning');
+        showNotification('⚠️ CommandBar does not work on browser pages. Try on any website.', 'warning');
         return;
       }
-      
-      // Intentar enviar mensaje para mostrar Command Bar
+
       try {
         await chrome.tabs.sendMessage(tabs[0].id, { action: 'toggle_commandbar' });
-        // Cerrar popup si funciona
         window.close();
       } catch (error) {
-        // Si falla, intentar inyección forzada
-        
         try {
           await chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: function() {
-              // CommandBar simplificado para sitios problemáticos
               const existingBar = document.getElementById('forced-commandbar');
               if (existingBar) {
                 existingBar.remove();
                 return;
               }
-              
+
               const commandBar = document.createElement('div');
               commandBar.id = 'forced-commandbar';
-                             commandBar.innerHTML = '<div style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(4px) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif !important;"><div style="background: white !important; border-radius: 12px !important; box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important; width: 90% !important; max-width: 600px !important; overflow: hidden !important;"><div style="padding: 20px !important; border-bottom: 1px solid #eee !important;"><input type="text" id="forced-input" placeholder="🚀 CommandBar Pro - Escribe comando, búsqueda o URL..." style="width: 100% !important; border: none !important; outline: none !important; font-size: 18px !important; padding: 0 !important; background: transparent !important;"></div><div style="padding: 16px !important; color: #666 !important; font-size: 14px !important;"><div style="margin-bottom: 8px !important;">⚡ <strong>Funciona en cualquier sitio:</strong></div><div>• Escribe una URL para navegar</div><div>• Escribe texto para buscar en Google</div><div>• Presiona Tab para buscar en Perplexity</div><div>• Presiona Escape para cerrar</div></div></div></div>';
+                             commandBar.innerHTML = '<div style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.7) !important; backdrop-filter: blur(4px) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif !important;"><div style="background: white !important; border-radius: 12px !important; box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important; width: 90% !important; max-width: 600px !important; overflow: hidden !important;"><div style="padding: 20px !important; border-bottom: 1px solid #eee !important;"><input type="text" id="forced-input" placeholder="🚀 CommandBar Pro - Type command, search or URL..." style="width: 100% !important; border: none !important; outline: none !important; font-size: 18px !important; padding: 0 !important; background: transparent !important;"></div><div style="padding: 16px !important; color: #666 !important; font-size: 14px !important;"><div style="margin-bottom: 8px !important;">⚡ <strong>Works on any site:</strong></div><div>• Type a URL to navigate</div><div>• Type text to search Google</div><div>• Press Tab to search Perplexity</div><div>• Press Escape to close</div></div></div></div>';
               
               document.body.appendChild(commandBar);
               
@@ -230,67 +199,45 @@ async function testCommandBar() {
             }
           });
           
-          // Cerrar popup tras inyección exitosa
           window.close();
         } catch (injectionError) {
-          // Error silencioso para evitar spam en consola
+          // silent
         }
       }
     }
   } catch (error) {
-    console.error('Error abriendo Command Bar:', error);
-    
-    // Obtener URL para mensaje específico
+    console.error('Error opening Command Bar:', error);
+
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const url = tabs[0]?.url || '';
-    
-    // Mensajes específicos según el sitio
-    if (url.includes('perplexity.ai') || url.includes('chatgpt.com') || 
+
+    if (url.includes('perplexity.ai') || url.includes('chatgpt.com') ||
         url.includes('claude.ai') || url.includes('bard.google.com')) {
-             showNotification('🔒 Este sitio bloquea extensiones. Usa Cmd+K en otros sitios.', 'info');
+             showNotification('🔒 This site blocks extensions. Use Cmd+K on other sites.', 'info');
     } else {
-      showNotification('⚠️ Recarga la página o prueba en otro sitio web', 'warning');
+      showNotification('⚠️ Reload the page or try another website', 'warning');
     }
   }
 }
 
-// Abrir opciones avanzadas
 function openOptions() {
   chrome.runtime.openOptionsPage();
 }
 
-// Abrir configuración de idioma (redirigir a opciones avanzadas)
-async function changeLanguage() {
-  try {
-    // Abrir la página de opciones directamente en la sección de idioma
-    await chrome.runtime.openOptionsPage();
-    // Cerrar el popup
-    window.close();
-  } catch (error) {
-    console.error('Error opening options page:', error);
-    // Fallback: mostrar mensaje de que debe abrir manualmente
-    showNotification(i18n.t('popup.messages.openOptionsManually'), 'info');
-  }
-}
-
-// Manejar cambios en configuración
 async function handleSettingChange(event) {
   const settingName = event.target.id.replace('-', '');
   const isChecked = event.target.checked;
-  
-  // Mapeo de nombres de configuración
+
   const settingMap = {
     'darkmode': 'darkMode',
     'storeusagestats': 'storeUsageStats'
   };
-  
+
   const actualSettingName = settingMap[settingName] || settingName;
-  
+
   try {
-    // Guardar la configuración
     await chrome.storage.sync.set({ [actualSettingName]: isChecked });
-    
-    // Aplicar cambios inmediatamente
+
     if (actualSettingName === 'darkMode') {
       if (isChecked) {
         document.body.classList.add('dark-theme');
@@ -298,38 +245,32 @@ async function handleSettingChange(event) {
         document.body.classList.remove('dark-theme');
       }
     }
-    
-    // Mostrar confirmación
+
     showNotification(`Setting ${actualSettingName} updated`, 'success');
-    
-    // Trackear el cambio
+
     trackUsage('setting_changed');
-    
+
   } catch (error) {
     console.error('Error saving setting:', error);
     showNotification('Error saving setting', 'error');
-    
-    // Revertir el checkbox si hay error
+
     event.target.checked = !isChecked;
   }
 }
 
-// Configurar efectos hover
 function setupHoverEffects() {
-  // Efectos para elementos interactivos
   const interactiveElements = document.querySelectorAll('.feature-item, .command-item, .search-type, .action-btn');
-  
+
   interactiveElements.forEach(element => {
     element.addEventListener('mouseenter', function() {
       this.style.transform = 'translateY(-2px)';
     });
-    
+
     element.addEventListener('mouseleave', function() {
       this.style.transform = 'translateY(0)';
     });
   });
-  
-  // Efecto especial para el botón principal
+
   const primaryBtn = document.querySelector('.action-btn.primary');
   primaryBtn.addEventListener('click', function() {
     this.style.transform = 'scale(0.95)';
@@ -339,41 +280,36 @@ function setupHoverEffects() {
   });
 }
 
-// Mostrar tip del día
 function showDailyTip() {
   const tips = [
-    'Usa "/" al inicio para comandos específicos',
-    'Escribe una URL para navegación directa',
-    'Busca en pestañas escribiendo parte del título',
-    'Accede rápido a marcadores con búsqueda',
-    'Usa Cmd+K (Mac) o Ctrl+K en cualquier página web',
-    'Cambia entre pestañas con búsqueda inteligente',
-    'Pinea pestañas importantes con /pin',
-    'Duplica pestañas rápidamente con /duplicar'
+    'Use "/" at the beginning for specific commands',
+    'Type a URL for direct navigation',
+    'Find tabs by typing part of the title',
+    'Quickly access bookmarks with search',
+    'Use Cmd+K (Mac) or Ctrl+K on any web page',
+    'Switch between tabs with smart search',
+    'Pin important tabs with /pin',
+    'Quickly duplicate tabs with /duplicate'
   ];
-  
+
   const today = new Date().getDay();
   const tipIndex = today % tips.length;
   const selectedTip = tips[tipIndex];
-  
-  // Actualizar el tip mostrado
+
   const tipElements = document.querySelectorAll('.tip-text');
   if (tipElements.length > 0) {
-    tipElements[0].textContent = `Tip del día: ${selectedTip}`;
+    tipElements[0].textContent = `Tip of the day: ${selectedTip}`;
   }
 }
 
-// Mostrar notificación
 function showNotification(message, type = 'info') {
-  // Crear elemento de notificación
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.innerHTML = `
     <span class="notification-icon">${getNotificationIcon(type)}</span>
     <span class="notification-text">${message}</span>
   `;
-  
-  // Agregar estilos
+
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -393,10 +329,8 @@ function showNotification(message, type = 'info') {
     max-width: 300px;
   `;
   
-  // Agregar al DOM
   document.body.appendChild(notification);
-  
-  // Remover después de 3 segundos
+
   setTimeout(() => {
     notification.style.animation = 'slideOut 0.3s ease-out';
     setTimeout(() => {
@@ -407,7 +341,6 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
-// Obtener icono de notificación
 function getNotificationIcon(type) {
   switch (type) {
     case 'success': return '✅';
@@ -417,7 +350,6 @@ function getNotificationIcon(type) {
   }
 }
 
-// Obtener color de notificación
 function getNotificationColor(type) {
   switch (type) {
     case 'success': return '#28a745';
@@ -429,7 +361,6 @@ function getNotificationColor(type) {
 
 
 
-// Función helper para actualizar elemento con verificación
 function updateElementText(elementId, translationKey, replacements = {}) {
   const element = document.getElementById(elementId);
   if (element) {
@@ -439,26 +370,18 @@ function updateElementText(elementId, translationKey, replacements = {}) {
   }
 }
 
-// Actualizar interfaz con traducciones
 function updateInterface() {
-  // Verificar que i18n esté disponible
   if (!window.i18n || typeof window.i18n.t !== 'function') {
     return;
   }
 
   try {
-    // Título y versión
     updateElementText('popup-app-name', 'appName');
     updateElementText('popup-version', 'popup.version');
     
     // Keyboard shortcuts section
     updateElementText('popup-keyboard-shortcuts', 'popup.keyboardShortcuts');
     updateElementText('popup-open-commandbar', 'popup.openCommandBar');
-    
-    // Support section
-    updateElementText('support-title', 'support.title');
-    updateElementText('support-message', 'support.message');
-    updateElementText('support-buy-coffee', 'support.buyMeACoffee');
     
     // Features section
     updateElementText('popup-features', 'popup.features');
@@ -491,11 +414,9 @@ function updateInterface() {
     updateElementText('popup-configuration', 'popup.configuration');
     updateElementText('popup-dark-theme', 'popup.settings.darkTheme');
     
-    // Footer buttons
     updateElementText('popup-try-commandbar', 'popup.tryCommandBar');
     updateElementText('popup-advanced-settings', 'popup.advancedSettings');
-    updateElementText('popup-change-language', 'popup.changeLanguage');
-    
+
     // Tips section
     updateElementText('popup-tip-slash', 'popup.tips.useSlash');
     updateElementText('popup-tip-url', 'popup.tips.directUrl');
@@ -522,7 +443,7 @@ function updateInterface() {
   }
 }
 
-// Agregar estilos de animación dinámicamente
+// Inject animation styles
 const style = document.createElement('style');
 style.textContent = `
   @keyframes slideIn {
@@ -632,7 +553,6 @@ document.addEventListener('keydown', function(event) {
   }
 });
 
-// Analytics y métricas (opcional)
 function trackUsage(action) {
   try {
     chrome.runtime.sendMessage({
@@ -641,7 +561,7 @@ function trackUsage(action) {
       usage_details: { source: 'popup' }
     });
   } catch (error) {
-    // Error silencioso para tracking
+    // silent
   }
 }
 

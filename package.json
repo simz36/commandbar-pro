@@ -1,14 +1,14 @@
 {
   "name": "commandbar-pro",
   "version": "1.2.0",
-  "description": "Command Bar avanzada para Chrome inspirada en Arc Browser",
+  "description": "Advanced Command Bar for Chrome inspired by Arc Browser",
   "main": "background.js",
   "scripts": {
-    "build": "echo 'Extensión lista para cargar en Chrome'",
-    "dev": "echo 'Cargar en chrome://extensions/ en modo desarrollador'",
+    "build": "echo 'Extension ready to load in Chrome'",
+    "dev": "echo 'Load in chrome://extensions/ in developer mode'",
     "package": "zip -r commandbar-pro-v1.2.1.zip . -x '*.git*' 'node_modules/*' 'package*.json' '.DS_Store'",
-    "lint": "echo 'Verificar sintaxis de archivos JavaScript'",
-    "test": "echo 'Ejecutar en Chrome para pruebas'"
+    "lint": "echo 'Check JavaScript file syntax'",
+    "test": "echo 'Run in Chrome for testing'"
   },
   "keywords": [
     "chrome-extension",
@@ -83,7 +83,6 @@
     "privacyFocused": true
   },
   "supportedLanguages": [
-    "es",
     "en"
   ],
   "compatibility": {

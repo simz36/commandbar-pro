@@ -1,9 +1,8 @@
-// JavaScript para la página de nueva pestaña de CommandBar Pro
+// JavaScript for the CommandBar Pro new tab page
 
-// Crear partículas flotantes
 function createParticles() {
   const container = document.getElementById('particles');
-  
+
   for (let i = 0; i < 50; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
@@ -14,44 +13,37 @@ function createParticles() {
   }
 }
 
-// Función para intentar abrir el CommandBar completo
 function openFullCommandBar() {
-  // Intentar usar la función del CommandBar completo primero
   let attempts = 0;
   const maxAttempts = 15;
-  
+
   function tryOpenCommandBar() {
     attempts++;
-    
-    // Verificar si showCommandBar está disponible (desde content.js)
+
     if (typeof showCommandBar === 'function' && typeof i18n !== 'undefined') {
       try {
         showCommandBar();
         return true;
       } catch (error) {
-        console.error('Error llamando showCommandBar:', error);
+        console.error('Error calling showCommandBar:', error);
       }
     }
-    
-    // Si no está disponible y no hemos alcanzado el máximo de intentos
+
     if (attempts < maxAttempts) {
       setTimeout(tryOpenCommandBar, 200);
     } else {
-      // Fallback: usar el CommandBar básico interno
       createCommandBarDirectly();
     }
   }
-  
+
   tryOpenCommandBar();
 }
 
-// Función fallback para crear CommandBar básico directamente
 function createCommandBarDirectly() {
-  // Si ya existe, no crear otro
   if (document.getElementById('commandbar-container')) {
     return;
   }
-  
+
   const commandBar = document.createElement('div');
   commandBar.id = 'commandbar-container';
   commandBar.innerHTML = `
@@ -81,9 +73,9 @@ function createCommandBarDirectly() {
           border-bottom: 1px solid #f0f0f0;
           background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
         ">
-          <input type="text" 
-                 id="basic-commandbar-input" 
-                 placeholder="Escribe comando, búsqueda o URL..." 
+          <input type="text"
+                 id="basic-commandbar-input"
+                 placeholder="Type command, search or URL..."
                  style="
                    width: 100%;
                    border: none;
@@ -100,30 +92,28 @@ function createCommandBarDirectly() {
           font-size: 14px;
           background: white;
         ">
-          <div style="margin-bottom: 12px; font-weight: 600; color: #3b82f6;">⚡ CommandBar en nueva pestaña</div>
-          <div style="margin-bottom: 12px; font-weight: 600;">📝 Acciones disponibles:</div>
+          <div style="margin-bottom: 12px; font-weight: 600; color: #3b82f6;">⚡ CommandBar in new tab</div>
+          <div style="margin-bottom: 12px; font-weight: 600;">📝 Available actions:</div>
           <div style="display: grid; gap: 6px;">
             <div>🌐 <strong>URLs:</strong> google.com, youtube.com, github.com</div>
-            <div>🔍 <strong>Búsquedas:</strong> recetas de pasta, noticias tecnología</div>
-            <div>⌨️ <strong>Comandos:</strong> /nueva, /marcadores, /historial, /configuracion</div>
+            <div>🔍 <strong>Searches:</strong> pasta recipes, technology news</div>
+            <div>⌨️ <strong>Commands:</strong> /new, /bookmarks, /history, /settings</div>
           </div>
           <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #888;">
-            Presiona <kbd style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Escape</kbd> para cerrar
+            Press <kbd style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Escape</kbd> to close
           </div>
         </div>
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(commandBar);
-  
-  // Enfocar el input
+
   const input = document.getElementById('basic-commandbar-input');
   if (input) {
     input.focus();
   }
-  
-  // Manejar eventos básicos
+
   function handleKeyDown(e) {
     if (e.key === 'Escape') {
       commandBar.remove();
@@ -137,10 +127,9 @@ function createCommandBarDirectly() {
       }
     }
   }
-  
+
   document.addEventListener('keydown', handleKeyDown);
-  
-  // Cerrar al hacer clic fuera
+
   commandBar.addEventListener('click', (e) => {
     if (e.target === commandBar) {
       commandBar.remove();
@@ -149,66 +138,51 @@ function createCommandBarDirectly() {
   });
 }
 
-// Manejar consultas del CommandBar básico
 function handleQuery(query) {
-  
-  // Detectar tipo de consulta
+
   if (query.includes('.') && !query.includes(' ')) {
-    // Es una URL - navegar en la misma pestaña (estamos en nuestra new_tab.html)
     const url = query.startsWith('http') ? query : 'https://' + query;
     window.location.href = url;
   } else if (query.startsWith('/')) {
-    // Es un comando
     handleCommand(query);
   } else {
-    // Es una búsqueda - navegar en la misma pestaña (estamos en nuestra new_tab.html)
     const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query);
     window.location.href = searchUrl;
   }
 }
 
-// Manejar comandos básicos
 function handleCommand(command) {
   const cmd = command.toLowerCase();
-  
+
   switch (cmd) {
-    case '/nueva':
     case '/new':
       if (typeof chrome !== 'undefined' && chrome.runtime) {
         chrome.runtime.sendMessage({ action: 'create_tab', url: 'chrome://newtab/' });
       }
       break;
-    case '/marcadores':
     case '/bookmarks':
-      // Navegar en la misma pestaña (estamos en nuestra new_tab.html)
       window.location.href = 'chrome://bookmarks/';
       break;
-    case '/historial':
     case '/history':
-      // Navegar en la misma pestaña (estamos en nuestra new_tab.html)
       window.location.href = 'chrome://history/';
       break;
     default:
-      // Búsqueda del comando - navegar en la misma pestaña
       const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(command);
       window.location.href = searchUrl;
   }
 }
 
-// Event listeners cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
   createParticles();
-  
-  // Auto-trigger del CommandBar después de un delay para permitir que content.js se cargue
+
   setTimeout(() => {
     openFullCommandBar();
   }, 1000);
 });
 
-// Listener para mensajes desde background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'toggle_commandbar') {
     openFullCommandBar();
   }
   sendResponse({ success: true });
-}); 
+});

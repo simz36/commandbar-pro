@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">CommandBar Pro - Opciones</title>
+  <title id="page-title">CommandBar Pro - Options</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -14,121 +14,86 @@
           <span class="title-icon">⚡</span>
           <span id="options-app-name">CommandBar Pro</span>
         </h1>
-        <p class="options-subtitle" id="options-subtitle">Configuración Avanzada</p>
+        <p class="options-subtitle" id="options-subtitle">Advanced Settings</p>
       </div>
     </header>
 
     <main class="options-content">
       <div class="options-grid">
-        <!-- Support Section -->
-        <section class="option-section support-section">
-          <h2 class="section-title support-title" id="support-title">
-            <span class="section-icon">☕</span>
-            <span>Apoya el Desarrollo</span>
-          </h2>
-          <div class="support-content">
-            <p id="support-message" class="support-message">Esta extensión ha sido desarrollada con cariño, y todas sus funciones son totalmente gratuitas. Desde lo más mínimo, puedes ayudarme a seguir manteniendo y actualizando la extensión, sería de gran ayuda.</p>
-            <a href="https://coff.ee/vandertoorm" target="_blank" class="coffee-btn">
-              <span class="coffee-icon">☕</span>
-              <span id="support-buy-coffee">Comprar un Café</span>
-            </a>
-          </div>
-        </section>
-
-        <!-- Idioma (Primera opción) -->
-        <section class="option-section">
-          <h2 class="section-title">
-            <span class="section-icon">🌐</span>
-            <span id="language-title">Idioma</span>
-          </h2>
-          <div class="option-group">
-            <div class="option-item">
-              <div class="option-info">
-                <label class="option-label" for="language-select" id="interface-language-label">Idioma de la Interfaz</label>
-                <p class="option-description" id="interface-language-desc">Selecciona el idioma de CommandBar</p>
-              </div>
-              <select id="language-select" class="option-select">
-                <option value="es">Español</option>
-                <option value="en">English</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        <!-- Configuración General -->
+        <!-- General Settings -->
         <section class="option-section">
           <h2 class="section-title">
             <span class="section-icon">⚙️</span>
-            <span id="general-settings-title">Configuración General</span>
+            <span id="general-settings-title">General Settings</span>
           </h2>
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" for="theme-select" id="interface-theme-label">Tema de Interfaz</label>
-                <p class="option-description" id="interface-theme-desc">Selecciona el tema visual de CommandBar</p>
+                <label class="option-label" for="theme-select" id="interface-theme-label">Interface Theme</label>
+                <p class="option-description" id="interface-theme-desc">Select the visual theme for CommandBar</p>
               </div>
               <select id="theme-select" class="option-select">
-                <option value="auto" id="theme-auto">Automático (Sistema)</option>
-                <option value="light" id="theme-light">Claro</option>
-                <option value="dark" id="theme-dark">Oscuro</option>
+                <option value="auto" id="theme-auto">Auto (System)</option>
+                <option value="light" id="theme-light">Light</option>
+                <option value="dark" id="theme-dark">Dark</option>
               </select>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" for="animation-speed" id="animation-speed-label">Velocidad de Animaciones</label>
-                <p class="option-description" id="animation-speed-desc">Controla la velocidad de las transiciones</p>
+                <label class="option-label" for="animation-speed" id="animation-speed-label">Animation Speed</label>
+                <p class="option-description" id="animation-speed-desc">Control the speed of transitions</p>
               </div>
               <select id="animation-speed" class="option-select">
-                <option value="slow" id="animation-slow">Lenta</option>
+                <option value="slow" id="animation-slow">Slow</option>
                 <option value="normal" id="animation-normal">Normal</option>
-                <option value="fast" id="animation-fast">Rápida</option>
-                <option value="none" id="animation-none">Sin animaciones</option>
+                <option value="fast" id="animation-fast">Fast</option>
+                <option value="none" id="animation-none">No animations</option>
               </select>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" for="max-results" id="max-results-label">Máximo de Resultados</label>
-                <p class="option-description" id="max-results-desc">Número máximo de sugerencias por categoría</p>
+                <label class="option-label" for="max-results" id="max-results-label">Max Results</label>
+                <p class="option-description" id="max-results-desc">Maximum number of suggestions per category</p>
               </div>
               <input type="number" id="max-results" class="option-input" min="3" max="20" value="5">
             </div>
           </div>
         </section>
 
-        <!-- Configuración de Búsqueda -->
+        <!-- Search Settings -->
         <section class="option-section">
           <h2 class="section-title">
             <span class="section-icon">🔍</span>
-            <span id="search-settings-title">Búsqueda y Resultados</span>
+            <span id="search-settings-title">Search and Results</span>
           </h2>
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="search-sources-label">Fuentes de Búsqueda</label>
-                <p class="option-description" id="search-sources-desc">Selecciona dónde buscar resultados</p>
+                <label class="option-label" id="search-sources-label">Search Sources</label>
+                <p class="option-description" id="search-sources-desc">Select where to search for results</p>
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-item">
                   <input type="checkbox" id="search-tabs" checked>
-                  <span class="checkbox-label" id="search-tabs-label">Pestañas Abiertas</span>
+                  <span class="checkbox-label" id="search-tabs-label">Open Tabs</span>
                 </label>
                 <label class="checkbox-item">
                   <input type="checkbox" id="search-bookmarks" checked>
-                  <span class="checkbox-label" id="search-bookmarks-label">Marcadores</span>
+                  <span class="checkbox-label" id="search-bookmarks-label">Bookmarks</span>
                 </label>
                 <label class="checkbox-item">
                   <input type="checkbox" id="search-history" checked>
-                  <span class="checkbox-label" id="search-history-label">Historial</span>
+                  <span class="checkbox-label" id="search-history-label">History</span>
                 </label>
               </div>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" for="search-delay" id="search-delay-label">Retraso de Búsqueda (ms)</label>
-                <p class="option-description" id="search-delay-desc">Tiempo de espera antes de ejecutar búsqueda</p>
+                <label class="option-label" for="search-delay" id="search-delay-label">Search Delay (ms)</label>
+                <p class="option-description" id="search-delay-desc">Wait time before executing the search</p>
               </div>
               <input type="range" id="search-delay" class="option-range" min="0" max="1000" value="50" step="50">
               <span class="range-value" id="search-delay-value">50ms</span>
@@ -136,8 +101,8 @@
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" for="default-search-engine" id="default-search-engine-label">Buscador por Defecto</label>
-                <p class="option-description" id="default-search-engine-desc">Motor de búsqueda para consultas web</p>
+                <label class="option-label" for="default-search-engine" id="default-search-engine-label">Default Search Engine</label>
+                <p class="option-description" id="default-search-engine-desc">Search engine for web queries</p>
               </div>
               <select id="default-search-engine" class="option-select">
                 <option value="google" id="engine-google">Google</option>
@@ -149,55 +114,55 @@
           </div>
         </section>
 
-        <!-- Atajos de Teclado -->
+        <!-- Keyboard Shortcuts -->
         <section class="option-section">
           <h2 class="section-title">
             <span class="section-icon">⌨️</span>
-            <span id="keyboard-shortcuts-title">Atajos de Teclado</span>
+            <span id="keyboard-shortcuts-title">Keyboard Shortcuts</span>
           </h2>
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="main-shortcuts-label">Atajos Principales</label>
-                <p class="option-description" id="main-shortcuts-desc">Combinaciones de teclado para CommandBar</p>
+                <label class="option-label" id="main-shortcuts-label">Main Shortcuts</label>
+                <p class="option-description" id="main-shortcuts-desc">Keyboard combinations for CommandBar</p>
               </div>
               <div style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- Toggle CommandBar shortcut -->
                 <div class="shortcut-recorder" data-command="toggle">
-                  <span class="shortcut-label" id="open-commandbar-shortcut">Abrir Command Bar</span>
+                  <span class="shortcut-label" id="open-commandbar-shortcut">Open Command Bar</span>
                   <div class="shortcut-recorder-input" id="shortcut-input-toggle" tabindex="0" role="button">
                     <span class="shortcut-keys" id="shortcut-keys-toggle">
                       <kbd class="key">Ctrl</kbd> + <kbd class="key">K</kbd>
                     </span>
-                    <span class="shortcut-recording-text" id="shortcut-recording-toggle" style="display:none;">Presiona tu atajo...</span>
+                    <span class="shortcut-recording-text" id="shortcut-recording-toggle" style="display:none;">Press your shortcut...</span>
                   </div>
-                  <button class="shortcut-change-btn" id="shortcut-change-toggle" type="button">Cambiar</button>
-                  <button class="shortcut-reset-btn" id="shortcut-reset-toggle" type="button" style="display:none;">Restablecer</button>
+                  <button class="shortcut-change-btn" id="shortcut-change-toggle" type="button">Change</button>
+                  <button class="shortcut-reset-btn" id="shortcut-reset-toggle" type="button" style="display:none;">Reset</button>
                 </div>
                 <!-- Edit URL shortcut -->
                 <div class="shortcut-recorder" data-command="edit">
-                  <span class="shortcut-label" id="edit-url-shortcut">Editar URL actual</span>
+                  <span class="shortcut-label" id="edit-url-shortcut">Edit current URL</span>
                   <div class="shortcut-recorder-input" id="shortcut-input-edit" tabindex="0" role="button">
                     <span class="shortcut-keys" id="shortcut-keys-edit">
                       <kbd class="key">Ctrl</kbd> + <kbd class="key">Shift</kbd> + <kbd class="key">K</kbd>
                     </span>
-                    <span class="shortcut-recording-text" id="shortcut-recording-edit" style="display:none;">Presiona tu atajo...</span>
+                    <span class="shortcut-recording-text" id="shortcut-recording-edit" style="display:none;">Press your shortcut...</span>
                   </div>
-                  <button class="shortcut-change-btn" id="shortcut-change-edit" type="button">Cambiar</button>
-                  <button class="shortcut-reset-btn" id="shortcut-reset-edit" type="button" style="display:none;">Restablecer</button>
+                  <button class="shortcut-change-btn" id="shortcut-change-edit" type="button">Change</button>
+                  <button class="shortcut-reset-btn" id="shortcut-reset-edit" type="button" style="display:none;">Reset</button>
                 </div>
               </div>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="additional-config-label">Configuración Adicional</label>
-                <p class="option-description" id="additional-config-desc">Personaliza el comportamiento de los atajos</p>
+                <label class="option-label" id="additional-config-label">Additional Settings</label>
+                <p class="option-description" id="additional-config-desc">Customize shortcut behavior</p>
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-item">
                   <input type="checkbox" id="prevent-site-shortcuts" checked>
-                  <span class="checkbox-label" id="prevent-site-shortcuts-label">Prevenir atajos del sitio web</span>
+                  <span class="checkbox-label" id="prevent-site-shortcuts-label">Prevent website shortcuts</span>
                 </label>
               </div>
             </div>
@@ -230,50 +195,50 @@
           </div>
         </section>
 
-        <!-- Privacidad y Datos -->
+        <!-- Privacy and Data -->
         <section class="option-section">
           <h2 class="section-title">
             <span class="section-icon">🔒</span>
-            <span id="privacy-title">Privacidad y Datos</span>
+            <span id="privacy-title">Privacy and Data</span>
           </h2>
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="data-collection-label">Recopilación de Datos</label>
-                <p class="option-description" id="data-collection-desc">Control sobre qué datos se almacenan localmente</p>
+                <label class="option-label" id="data-collection-label">Data Collection</label>
+                <p class="option-description" id="data-collection-desc">Control which data is stored locally</p>
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-item">
                   <input type="checkbox" id="store-usage-stats">
-                  <span class="checkbox-label" id="usage-stats-label">Estadísticas de uso (local)</span>
+                  <span class="checkbox-label" id="usage-stats-label">Usage statistics (local)</span>
                 </label>
               </div>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="stats-viewer-label">Estadísticas Recopiladas</label>
-                <p class="option-description" id="stats-viewer-desc">Visualiza las estadísticas de uso almacenadas localmente</p>
+                <label class="option-label" id="stats-viewer-label">Collected Statistics</label>
+                <p class="option-description" id="stats-viewer-desc">View locally stored usage statistics</p>
               </div>
               <div class="button-group">
                 <button class="option-button secondary" id="view-stats">
                   <span class="button-icon">📊</span>
-                  <span id="view-stats-text">Ver Estadísticas</span>
+                  <span id="view-stats-text">View Statistics</span>
                 </button>
                 <button class="option-button secondary" id="refresh-stats">
                   <span class="button-icon">🔄</span>
-                  <span id="refresh-stats-text">Actualizar</span>
+                  <span id="refresh-stats-text">Refresh</span>
                 </button>
               </div>
-              
-              <!-- Panel de estadísticas (inicialmente oculto) -->
+
+              <!-- Stats panel (initially hidden) -->
               <div id="stats-panel" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
                 <div id="stats-content">
                   <div class="stats-loading" id="stats-loading" style="text-align: center; color: #6c757d;">
-                    <span>📊 Cargando estadísticas...</span>
+                    <span>📊 Loading statistics...</span>
                   </div>
                   <div id="stats-data" style="display: none;">
-                    <!-- El contenido se llenará dinámicamente -->
+                    <!-- Filled dynamically -->
                   </div>
                 </div>
               </div>
@@ -281,21 +246,21 @@
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="data-cleanup-label">Limpieza de Datos</label>
-                <p class="option-description" id="data-cleanup-desc">Gestionar datos almacenados</p>
+                <label class="option-label" id="data-cleanup-label">Data Cleanup</label>
+                <p class="option-description" id="data-cleanup-desc">Manage stored data</p>
               </div>
               <div class="button-group">
                 <button class="option-button secondary" id="clear-cache">
                   <span class="button-icon">🗑️</span>
-                  <span id="clear-cache-text">Limpiar Cache</span>
+                  <span id="clear-cache-text">Clear Cache</span>
                 </button>
                 <button class="option-button secondary" id="clear-stats">
                   <span class="button-icon">📊</span>
-                  <span id="clear-stats-text">Limpiar Estadísticas</span>
+                  <span id="clear-stats-text">Clear Statistics</span>
                 </button>
                 <button class="option-button danger" id="reset-all">
                   <span class="button-icon">🔄</span>
-                  <span id="reset-all-text">Restablecer Todo</span>
+                  <span id="reset-all-text">Reset All</span>
                 </button>
               </div>
             </div>
@@ -303,8 +268,7 @@
         </section>
 
 
-        <!-- Funciones Experimentales -->
-        <!-- NOTA: Esta sección está hardcodeada en inglés para evitar problemas de traducción -->
+        <!-- Experimental Functions -->
         <section class="option-section experimental-section">
           <h2 class="section-title">
             <span class="section-icon">🧪</span>
@@ -315,13 +279,13 @@
             <span class="warning-icon">⚠️</span>
             <span id="experimental-warning-text">Experimental functions are under development and may change in future versions. Use them at your own risk.</span>
           </div>
-          
+
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
                 <label class="option-label" id="auto-open-new-tab-label">Auto-open in New Tab</label>
                 <p class="option-description" id="auto-open-new-tab-desc">Automatically open complete CommandBar when creating new empty tabs (Ctrl+T, + button). Includes all features: tab search, bookmarks, history, and intelligent autocompletion.</p>
-              
+
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-item">
@@ -336,62 +300,62 @@
                 <label class="option-label" for="auto-open-delay" id="auto-open-delay-label">Auto-open Delay (ms)</label>
                 <p class="option-description" id="auto-open-delay-desc">Wait time before opening CommandBar (100ms recommended for fast transition)</p>
               </div>
-              <input type="range" 
-                         id="auto-open-delay" 
-                         min="50" 
-                         max="2000" 
-                         step="50" 
-                         value="100" 
+              <input type="range"
+                         id="auto-open-delay"
+                         min="50"
+                         max="2000"
+                         step="50"
+                         value="100"
                          class="option-range">
               <span class="range-value" id="auto-open-delay-value">100ms</span>
             </div>
-            
-          
+
+
           </div>
         </section>
 
-        <!-- Cache ULTRA -->
+        <!-- ULTRA Cache -->
         <section class="option-section">
           <h2 class="section-title">
             <span class="section-icon">⚡</span>
-            <span id="cache-management-title">Cache ULTRA</span>
+            <span id="cache-management-title">ULTRA Cache</span>
             <span class="beta-badge">ULTRA</span>
           </h2>
           <div class="option-group">
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="cache-status-label">Estado del Cache ULTRA</label>
-                <p class="option-description" id="cache-status-desc">Sistema de cache permanente con favicons precargados</p>
+                <label class="option-label" id="cache-status-label">ULTRA Cache Status</label>
+                <p class="option-description" id="cache-status-desc">Permanent cache system with preloaded favicons</p>
               </div>
               <div class="cache-status" id="cache-status">
                 <div class="cache-info">
                   <div class="cache-item">
-                    <span class="cache-label">Estado:</span>
-                    <span class="cache-value" id="cache-state">Cargando...</span>
+                    <span class="cache-label">State:</span>
+                    <span class="cache-value" id="cache-state">Loading...</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">URLs en cache:</span>
+                    <span class="cache-label">URLs cached:</span>
                     <span class="cache-value" id="cache-urls">-</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">Dominios únicos:</span>
+                    <span class="cache-label">Unique domains:</span>
                     <span class="cache-value" id="cache-domains">-</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">Favicons cacheados:</span>
+                    <span class="cache-label">Cached favicons:</span>
                     <span class="cache-value" id="cache-favicons">-</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">Última actualización:</span>
+                    <span class="cache-label">Last update:</span>
                     <span class="cache-value" id="cache-last-update">-</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">Uso de memoria:</span>
+                    <span class="cache-label">Memory usage:</span>
                     <span class="cache-value" id="cache-memory">-</span>
                   </div>
                   <div class="cache-item">
-                    <span class="cache-label">Auto-actualización:</span>
-                    <span class="cache-value" id="cache-auto-update">✅ Activa</span>
+                    <span class="cache-label">Auto-update:</span>
+                    <span class="cache-value" id="cache-auto-update">✅ Active</span>
                   </div>
                 </div>
               </div>
@@ -399,55 +363,55 @@
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="cache-actions-label">Acciones de Cache ULTRA</label>
-                <p class="option-description" id="cache-actions-desc">Gestiona el sistema de cache avanzado</p>
+                <label class="option-label" id="cache-actions-label">ULTRA Cache Actions</label>
+                <p class="option-description" id="cache-actions-desc">Manage the advanced cache system</p>
               </div>
               <div class="cache-actions">
                 <button class="option-button primary" id="rebuild-cache">
                   <span class="button-icon">⚡</span>
-                  <span id="rebuild-cache-text">Cargar Cache ULTRA</span>
+                  <span id="rebuild-cache-text">Load ULTRA Cache</span>
                 </button>
                 <button class="option-button secondary" id="clear-cache">
                   <span class="button-icon">🗑️</span>
-                  <span id="clear-cache-text">Limpiar Cache</span>
+                  <span id="clear-cache-text">Clear Cache</span>
                 </button>
                 <button class="option-button secondary" id="view-top-domains">
                   <span class="button-icon">📊</span>
-                  <span id="view-top-domains-text">Ver Dominios Top</span>
+                  <span id="view-top-domains-text">View Top Domains</span>
                 </button>
                 <button class="option-button secondary" id="cache-stats">
                   <span class="button-icon">📈</span>
-                  <span id="cache-stats-text">Estadísticas</span>
+                  <span id="cache-stats-text">Statistics</span>
                 </button>
               </div>
             </div>
 
             <div class="option-item">
               <div class="option-info">
-                <label class="option-label" id="cache-config-label">Configuración Avanzada</label>
-                <p class="option-description" id="cache-config-desc">Ajusta el comportamiento del cache ULTRA</p>
+                <label class="option-label" id="cache-config-label">Advanced Settings</label>
+                <p class="option-description" id="cache-config-desc">Adjust ULTRA cache behavior</p>
               </div>
               <div class="cache-config">
                 <div class="config-item">
-                  <label class="config-label" for="max-urls">Máximo de URLs:</label>
+                  <label class="config-label" for="max-urls">Max URLs:</label>
                   <input type="number" id="max-urls" class="config-input" min="10000" max="200000" value="100000">
                   <span class="config-hint">(10,000 - 200,000)</span>
                 </div>
                 <div class="config-item">
-                  <label class="config-label" for="max-favicons">Máximo de Favicons:</label>
+                  <label class="config-label" for="max-favicons">Max Favicons:</label>
                   <input type="number" id="max-favicons" class="config-input" min="100" max="5000" value="1000">
                   <span class="config-hint">(100 - 5,000)</span>
                 </div>
                 <div class="config-item">
                   <label class="checkbox-item">
                     <input type="checkbox" id="auto-update-cache" checked>
-                    <span class="checkbox-label">Auto-actualización al visitar páginas</span>
+                    <span class="checkbox-label">Auto-update on page visits</span>
                   </label>
                 </div>
                 <div class="config-item">
                   <label class="checkbox-item">
                     <input type="checkbox" id="persistent-cache" checked>
-                    <span class="checkbox-label">Cache persistente (sobrevive a reinicios)</span>
+                    <span class="checkbox-label">Persistent cache (survives restarts)</span>
                   </label>
                 </div>
               </div>
@@ -455,34 +419,34 @@
 
             <div class="option-item" id="cache-progress-container" style="display: none;">
               <div class="option-info">
-                <label class="option-label" id="cache-progress-label">Progreso de Carga ULTRA</label>
-                <p class="option-description" id="cache-progress-desc">Procesando historial completo...</p>
+                <label class="option-label" id="cache-progress-label">ULTRA Load Progress</label>
+                <p class="option-description" id="cache-progress-desc">Processing full history...</p>
               </div>
               <div class="cache-progress">
                 <div class="progress-bar">
                   <div class="progress-fill" id="progress-fill"></div>
                 </div>
-                <div class="progress-text" id="progress-text">Iniciando...</div>
+                <div class="progress-text" id="progress-text">Starting...</div>
               </div>
             </div>
 
             <div class="option-item" id="top-domains-container" style="display: none;">
               <div class="option-info">
-                <label class="option-label" id="top-domains-label">Dominios Más Visitados</label>
-                <p class="option-description" id="top-domains-desc">Los sitios web más frecuentes en tu historial</p>
+                <label class="option-label" id="top-domains-label">Most Visited Domains</label>
+                <p class="option-description" id="top-domains-desc">The most frequent websites in your history</p>
               </div>
               <div class="top-domains-list" id="top-domains-list">
-                <!-- Se llena dinámicamente -->
+                <!-- Filled dynamically -->
               </div>
             </div>
 
             <div class="option-item" id="cache-stats-container" style="display: none;">
               <div class="option-info">
-                <label class="option-label" id="cache-stats-label">Estadísticas Detalladas</label>
-                <p class="option-description" id="cache-stats-desc">Información completa del rendimiento del cache</p>
+                <label class="option-label" id="cache-stats-label">Detailed Statistics</label>
+                <p class="option-description" id="cache-stats-desc">Complete information about cache performance</p>
               </div>
               <div class="cache-stats" id="cache-stats-content">
-                <!-- Se llena dinámicamente -->
+                <!-- Filled dynamically -->
               </div>
             </div>
           </div>
@@ -496,57 +460,57 @@
         <div class="footer-info">
           <p class="footer-text" id="footer-version">CommandBar Pro v1.3.0</p>
           <p class="footer-links">
-            <a href="#" id="view-changelog" class="footer-link">Registro de cambios</a> •
-            <a href="#" id="report-bug" class="footer-link">Reportar bug</a> •
-            <a href="#" id="view-source" class="footer-link">Ver código fuente</a>
+            <a href="#" id="view-changelog" class="footer-link">Changelog</a> •
+            <a href="#" id="report-bug" class="footer-link">Report bug</a> •
+            <a href="#" id="view-source" class="footer-link">View source code</a>
           </p>
         </div>
         <div class="footer-actions">
           <button class="option-button secondary" id="export-settings">
             <span class="button-icon">📤</span>
-            <span id="export-settings-text">Exportar Configuración</span>
+            <span id="export-settings-text">Export Settings</span>
           </button>
           <button class="option-button secondary" id="import-settings">
             <span class="button-icon">📥</span>
-            <span id="import-settings-text">Importar Configuración</span>
+            <span id="import-settings-text">Import Settings</span>
           </button>
           <button class="option-button primary" id="save-options">
             <span class="button-icon">💾</span>
-            <span id="save-changes-text">Guardar Cambios</span>
+            <span id="save-changes-text">Save Changes</span>
           </button>
         </div>
       </div>
     </footer>
   </div>
 
-  <!-- Modal para confirmaciones -->
+  <!-- Confirmation modal -->
   <div class="modal-overlay" id="modal-overlay" style="display: none;">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">Confirmar acción</h3>
+        <h3 class="modal-title" id="modal-title">Confirm action</h3>
         <button class="modal-close" id="modal-close">✕</button>
       </div>
       <div class="modal-content">
-        <p class="modal-message" id="modal-message">¿Estás seguro de que quieres continuar?</p>
+        <p class="modal-message" id="modal-message">Are you sure you want to continue?</p>
       </div>
       <div class="modal-footer">
         <button class="option-button secondary" id="modal-cancel">
-          <span id="modal-cancel-text">Cancelar</span>
+          <span id="modal-cancel-text">Cancel</span>
         </button>
         <button class="option-button primary" id="modal-confirm">
-          <span id="modal-confirm-text">Confirmar</span>
+          <span id="modal-confirm-text">Confirm</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Notificación toast -->
+  <!-- Toast notification -->
   <div class="toast" id="toast" style="display: none;">
     <span class="toast-icon" id="toast-icon">✅</span>
-    <span class="toast-message" id="toast-message">Configuración guardada correctamente</span>
+    <span class="toast-message" id="toast-message">Settings saved successfully</span>
   </div>
 
   <script src="i18n.js"></script>
   <script src="options.js"></script>
 </body>
-</html> 
+</html>

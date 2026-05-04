@@ -1,10 +1,9 @@
-// Content Script para CommandBar Pro
+// Content Script for CommandBar Pro
 let commandBarContainer = null;
 let isCommandBarVisible = false;
-let editMode = false; // Modo edición de URL actual
-let isInitialized = false; // Flag para evitar inicialización duplicada
+let editMode = false;
+let isInitialized = false;
 
-// Variables globales
 let userSettings = {};
 let searchTimeout = null;
 let searchGeneration = 0;
@@ -14,9 +13,8 @@ let lastInputLength = 0;
 let isDeletingTimeout = null;
 let isInDeletionMode = false;
 let isAutocompletingFromTyping = false;
-let isSiteExcluded = false; // Flag for excluded websites
+let isSiteExcluded = false;
 
-// Función para tracking de uso local (envía al background script)
 async function trackUsageLocal(action, details = {}) {
   try {
     await chrome.runtime.sendMessage({
@@ -25,11 +23,10 @@ async function trackUsageLocal(action, details = {}) {
       usage_details: details
     });
   } catch (error) {
-    // Ignorar errores de tracking para no interrumpir funcionalidad
+    // silent
   }
 }
 
-// Check if URL matches any excluded pattern
 function isUrlExcluded(url, patterns) {
   if (!patterns || patterns.length === 0) return false;
   return patterns.some(pattern => {
@@ -41,7 +38,6 @@ function isUrlExcluded(url, patterns) {
   });
 }
 
-// Configuración de usuario (ya declarada arriba)
 userSettings = {
   defaultSearchEngine: 'google',
   searchTabs: true,
@@ -51,41 +47,36 @@ userSettings = {
   searchDelay: 50
 };
 
-// Función para cargar configuración
 async function loadUserSettings() {
   try {
     const settings = await chrome.storage.sync.get(['defaultSearchEngine', 'searchTabs', 'searchBookmarks', 'searchHistory', 'maxResults', 'searchDelay', 'language', 'shortcutToggleCommandbar', 'shortcutEditCurrentUrl', 'excludedWebsites']);
     userSettings.defaultSearchEngine = settings.defaultSearchEngine || 'google';
-    userSettings.searchTabs = settings.searchTabs !== false; // Por defecto true
-    userSettings.searchBookmarks = settings.searchBookmarks !== false; // Por defecto true
-    userSettings.searchHistory = settings.searchHistory !== false; // Por defecto true
+    userSettings.searchTabs = settings.searchTabs !== false;
+    userSettings.searchBookmarks = settings.searchBookmarks !== false;
+    userSettings.searchHistory = settings.searchHistory !== false;
     userSettings.maxResults = settings.maxResults || 5;
     userSettings.searchDelay = settings.searchDelay || 50;
     userSettings.shortcutToggleCommandbar = settings.shortcutToggleCommandbar || null;
     userSettings.shortcutEditCurrentUrl = settings.shortcutEditCurrentUrl || null;
-    userSettings.language = settings.language || 'es';
+    userSettings.language = settings.language || 'en';
     userSettings.excludedWebsites = settings.excludedWebsites || [];
 
-    // Check if current site is excluded
     isSiteExcluded = isUrlExcluded(window.location.href, userSettings.excludedWebsites);
 
-    // Sincronizar idioma con i18n
     if (typeof i18n !== 'undefined' && i18n && typeof i18n.setLanguage === 'function') {
       await i18n.setLanguage(userSettings.language);
     }
   } catch (error) {
-    // Error silencioso para páginas donde chrome.storage no está disponible
     userSettings.defaultSearchEngine = 'google';
     userSettings.searchTabs = true;
     userSettings.searchBookmarks = true;
     userSettings.searchHistory = true;
     userSettings.maxResults = 5;
     userSettings.searchDelay = 50;
-    userSettings.language = 'es';
+    userSettings.language = 'en';
   }
 }
 
-// Función para generar URL de búsqueda según el motor configurado
 function getSearchUrl(query, engine = null) {
   const searchEngine = engine || userSettings.defaultSearchEngine;
   const encodedQuery = encodeURIComponent(query);
@@ -105,12 +96,12 @@ function getSearchUrl(query, engine = null) {
   }
 }
 
-// Detectar si es macOS
+// macOS detection
 function isMacOS() {
   return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 }
 
-// Obtener tecla modificadora según la plataforma
+// Get the platform-aware modifier key
 function getModifierKey() {
   return isMacOS() ? 'Cmd' : 'Ctrl';
 }
@@ -157,11 +148,11 @@ function eventMatchesShortcut(e, shortcutStr) {
   return pressedKey === key;
 }
 
-// Crear la estructura de la Command Bar
+// Build the Command Bar structure
 function createCommandBar() {
   if (commandBarContainer) return;
 
-  // Crear contenedor principal
+  // Build the main container
   commandBarContainer = document.createElement('div');
   commandBarContainer.id = 'commandbar-container';
   const modifierKey = getModifierKey();
@@ -207,7 +198,7 @@ function createCommandBar() {
   setupEventListeners();
 }
 
-// Configurar event listeners
+// Configure event listeners
 function setupEventListeners() {
   const input = document.getElementById('commandbar-input');
   const overlay = document.getElementById('commandbar-overlay');
@@ -245,34 +236,34 @@ function setupEventListeners() {
   });
 }
 
-// Constantes de configuración del cache híbrido
-const AUTOCOMPLETE_CACHE_SIZE = 5000; // Tamaño máximo del cache
-const AUTOCOMPLETE_CACHE_TRIM_SIZE = 2500; // Tamaño al que se reduce cuando se limpia
-const AUTOCOMPLETE_DEBOUNCE_MS = 50; // Tiempo de debounce para autocompletado rápido
+// Hybrid cache configuration constants
+const AUTOCOMPLETE_CACHE_SIZE = 5000; // Max cache size
+const AUTOCOMPLETE_CACHE_TRIM_SIZE = 2500; // Trim target size when pruning
+const AUTOCOMPLETE_DEBOUNCE_MS = 50; // Debounce window for fast autocomplete
 
 // Variables para autocompletado
 let autocompleteSuggestion = '';
 let autocompleteData = null;
 let lastAutocompleteQuery = ''; // Para evitar autocompletados repetidos
-let autocompleteCache = new Map(); // Cache híbrido para resultados (hasta 5000 entradas)
+let autocompleteCache = new Map(); // Hybrid result cache (up to 5000 entries)
 let isAutocompletePending = false; // Para evitar solapamientos
 
-// Manejar input
+// Handle input
 function handleInput(e) {
   const currentLength = e.target.value.length;
   const wasDeleting = isDeleting;
   isDeleting = currentLength < lastInputLength;
   lastInputLength = currentLength;
   
-  // Extender el período de borrado para evitar autocompletado inmediato
+  // Extend the deletion window to avoid immediate autocomplete
   if (isDeleting) {
     isInDeletionMode = true;
-    clearAutocomplete(); // Limpiar INMEDIATAMENTE al detectar borrado
+    clearAutocomplete(); // Clear IMMEDIATELY on deletion
     
     if (isDeletingTimeout) {
       clearTimeout(isDeletingTimeout);
     }
-    // Mantener bloqueado por 500ms (más tiempo)
+    // Stay blocked for 500ms (longer)
     isDeletingTimeout = setTimeout(() => {
       isDeleting = false;
       isInDeletionMode = false;
@@ -280,15 +271,15 @@ function handleInput(e) {
     }, 500);
   }
   
-  // CRUCIAL: Si hay texto seleccionado y el usuario está escribiendo, 
-  // significa que quiere cambiar la sugerencia, no aceptarla
+  // CRUCIAL: when text is selected and the user is typing, 
+  // means they want to change the suggestion, not accept it
   if (e.target.selectionStart !== e.target.selectionEnd) {
     // Hay texto seleccionado (autocompletado activo)
     clearAutocomplete();
-    // Permitir que el input natural continúe
+    // Let the natural input flow continue
   }
   
-  // Si estamos en medio de un autocompletado y el usuario sigue escribiendo
+  // If we are mid-autocomplete and the user keeps typing
   if (isAutocompletingFromTyping) {
     isAutocompletingFromTyping = false;
     return;
@@ -303,13 +294,13 @@ function handleInput(e) {
       // Use raw (untrimmed) value so keyword prefixes like "h " are detected
       performSearch(rawQuery);
       
-      // Solo autocompletar si NO está borrando, no empieza con "/", y no tiene keyword prefix
+      // Only autocomplete when NOT deleting, not starting with "/", and no keyword prefix
       const parsedForAC = parseKeywordPrefix(rawQuery);
       if (!isDeleting && !isInDeletionMode && !query.startsWith('/') && !parsedForAC.prefix && query.length >= 2) {
-        // Autocompletado INSTANTÁNEO estilo Arc
+        // INSTANT Arc-style autocomplete
         performAutocompleteInstant(query);
       } else {
-        // Limpiar timeout y autocompletado inmediatamente
+        // Clear timeout and autocomplete immediately
         if (autocompleteTimeout) {
           clearTimeout(autocompleteTimeout);
           autocompleteTimeout = null;
@@ -317,7 +308,7 @@ function handleInput(e) {
         clearAutocomplete();
       }
       
-      // Mostrar comandos si empieza con "/"
+      // Show commands when input starts with "/"
       if (query.startsWith('/')) {
         showAllCommands(query.slice(1));
       }
@@ -325,15 +316,15 @@ function handleInput(e) {
       showDefaultSuggestions();
       clearAutocomplete();
     }
-  }, userSettings.searchDelay); // Usar configuración del usuario
+  }, userSettings.searchDelay); // Use the user's configuration
 }
 
-// Manejar autocompletado en la barra de input
+// Handle autocomplete in the input bar
 function handleInputAutocomplete(query, suggestion) {
   const input = document.getElementById('commandbar-input');
   if (!input || !suggestion) return;
   
-  // Verificar si la query está al inicio de la sugerencia
+  // Check whether the query starts the suggestion
   if (suggestion.toLowerCase().startsWith(query.toLowerCase())) {
     // Calcular el texto a autocompletar
     const autocompleteText = suggestion.substring(query.length);
@@ -349,7 +340,7 @@ function handleInputAutocomplete(query, suggestion) {
   }
 }
 
-// Función de autocompletado instantáneo usando el historial
+// Instant autocomplete using history
 async function performAutocompleteInstant(query) {
   if (!query || query.length < 2) {
     clearAutocomplete();
@@ -372,10 +363,10 @@ async function performAutocompleteInstant(query) {
   }
 }
 
-// Realizar autocompletado
+// Run autocomplete
 async function performAutocomplete(query) {
   try {
-    // Buscar en historial para autocompletado
+    // Search history for autocomplete
     const response = await chrome.runtime.sendMessage({
       action: 'search_history_autocomplete',
       query: query
@@ -385,10 +376,10 @@ async function performAutocomplete(query) {
       // Autocompletar en la barra de input
       handleInputAutocomplete(query, response.suggestion);
       
-      // Mostrar sugerencias integradas en el menú (sin hint flotante)
+      // Show suggestions inside the menu (no floating hint)
       showIntegratedSuggestions(response.favicon, response.title, response.suggestion);
     } else {
-      // Limpiar autocompletado si no hay sugerencias
+      // Clear autocomplete if no suggestions
       clearAutocomplete();
     }
   } catch (error) {
@@ -402,13 +393,13 @@ function showArcStyleAutocomplete(query, suggestion, favicon, title) {
   const input = document.getElementById('commandbar-input');
   if (!input) return;
   
-  // Verificar que el usuario no esté escribiendo activamente
+  // Make sure the user is not actively typing
   const currentValue = input.value.toLowerCase();
   const queryLower = query.toLowerCase();
   
-  // Solo proceder si el input actual coincide con la query
+  // Only proceed if the current input matches the query
   if (!currentValue.startsWith(queryLower)) {
-    return; // El usuario ha seguido escribiendo, no interferir
+    return; // User kept typing — don't interfere
   }
   
   autocompleteSuggestion = suggestion;
@@ -419,13 +410,13 @@ function showArcStyleAutocomplete(query, suggestion, favicon, title) {
   if (suggestionLower.startsWith(queryLower) && suggestion.length > query.length) {
     // CRUCIAL: Solo autocompletar si no hay texto seleccionado y el input coincide exactamente
     if (input.selectionStart === input.selectionEnd && input.value === query) {
-      // Rellena el input con la sugerencia completa
+      // Fill input with the full suggestion
       isAutocompletingFromTyping = true;
       const cursorPosition = query.length;
       
       // Usar requestAnimationFrame para evitar conflictos con input events
       requestAnimationFrame(() => {
-        // Verificar una vez más que el input no ha cambiado
+        // Double-check the input hasn't changed
         if (input.value === query) {
           input.value = suggestion;
           // Selecciona solo la parte autocompletada
@@ -435,20 +426,20 @@ function showArcStyleAutocomplete(query, suggestion, favicon, title) {
       });
     }
     
-    // Mostrar hint visual con favicon (siempre, incluso sin autocompletar)
+    // Show visual hint with favicon (always, even without autocomplete)
     showFaviconHint(favicon, title, suggestion);
   }
 }
 
-// Mostrar sugerencia de autocompletado con favicon (solo integrada en menú)
+// Show autocomplete suggestion with favicon (menu-only)
 function showFaviconHint(favicon, title, url) {
-  // Solo mostrar la recomendación integrada en el menú
+  // Only show the recommendation inside the menu
   showIntegratedSuggestions(favicon, title, url);
 }
 
 
 
-// Mostrar toast de notificación
+// Show toast notification
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.style.cssText = `
@@ -468,7 +459,7 @@ function showToast(message, type = 'info') {
     max-width: 300px;
   `;
   
-  // Colores según tipo
+  // Colors per type
   const colors = {
     success: '#10b981',
     error: '#ef4444', 
@@ -481,12 +472,12 @@ function showToast(message, type = 'info') {
   
   document.body.appendChild(toast);
   
-  // Animación de entrada
+  // Entrance animation
   setTimeout(() => {
     toast.style.transform = 'translateX(0)';
   }, 10);
   
-  // Auto-remover después de 3 segundos
+  // Auto-remove after 3 seconds
   setTimeout(() => {
     toast.style.transform = 'translateX(100%)';
     setTimeout(() => {
@@ -499,19 +490,19 @@ function showToast(message, type = 'info') {
 
 
 
-// Limpiar autocompletado
+// Clear autocomplete
 function clearAutocomplete() {
-  // Remover sección de autocompletado integrada
+  // Remove the inline autocomplete section
   const integratedSection = document.querySelector('.commandbar-section[data-type="integrated-autocomplete"]');
   if (integratedSection) {
     integratedSection.remove();
   }
 }
 
-// Función para limpiar cache periódicamente (evitar memory leaks)
+// Periodically prune cache (avoid memory leaks)
 function cleanAutocompleteCache() {
   if (autocompleteCache.size > AUTOCOMPLETE_CACHE_SIZE) {
-    // Mantener solo los más recientes para optimizar memoria
+    // Keep only the most recent entries to save memory
     const entries = Array.from(autocompleteCache.entries());
     autocompleteCache.clear();
     entries.slice(-AUTOCOMPLETE_CACHE_TRIM_SIZE).forEach(([key, value]) => {
@@ -520,7 +511,7 @@ function cleanAutocompleteCache() {
   }
 }
 
-// Manejar teclas especiales
+// Handle special keys
 function handleKeyDown(e) {
   const suggestions = document.querySelectorAll('.commandbar-item');
   const selected = document.querySelector('.commandbar-item.selected');
@@ -570,13 +561,13 @@ function handleKeyDown(e) {
       case 'Delete':
       case ' ':
       case 'Space':
-        // Limpiar autocompletado al borrar o poner espacio
+        // Clear autocomplete al borrar o poner espacio
         clearAutocomplete();
         if (e.key === 'Backspace' || e.key === 'Delete') {
           isDeleting = true;
           isInDeletionMode = true;
           
-          // Extender período de borrado para evitar autocompletado inmediato
+          // Extend the deletion window to avoid immediate autocomplete
           if (isDeletingTimeout) {
             clearTimeout(isDeletingTimeout);
           }
@@ -584,15 +575,15 @@ function handleKeyDown(e) {
             isDeleting = false;
             isInDeletionMode = false;
             isDeletingTimeout = null;
-          }, 500); // Más tiempo para borrado limpio
+          }, 500); // Longer delay for a clean deletion
         }
         break;
         
       default:
-        // Para cualquier tecla de escritura, si hay selección activa, limpiar autocompletado
+        // For any printable key, if a selection is active, clear autocomplete
         if (e.target && e.target.selectionStart !== e.target.selectionEnd && 
             e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-          // El usuario está escribiendo sobre una selección - limpiar autocompletado
+          // The user is overwriting a selection — clear autocomplete
           clearAutocomplete();
         }
         break;
@@ -618,7 +609,7 @@ function handleKeyDown(e) {
   }
 }
 
-// Navegar por sugerencias con teclado
+// Navigate suggestions with the keyboard
 function navigateSuggestions(direction) {
   const suggestions = document.querySelectorAll('.commandbar-item');
   const selected = document.querySelector('.commandbar-item.selected');
@@ -650,7 +641,7 @@ function parseKeywordPrefix(query) {
   return { prefix: null, query };
 }
 
-// Realizar búsqueda
+// Run search
 async function performSearch(query) {
   const suggestions = document.getElementById('commandbar-suggestions');
 
@@ -660,7 +651,7 @@ async function performSearch(query) {
   // Trim for normal (non-prefix) searches
   query = parsed.prefix ? query : query.trim();
 
-  // Trackear búsquedas (solo si está habilitado)
+  // Track searches (only if enabled)
   trackUsageLocal('search_performed', {
     type: isURL(query) ? 'url' : query.startsWith('/') ? 'command' : parsed.prefix ? `keyword:${parsed.prefix}` : 'text',
     length: query.length
@@ -672,7 +663,7 @@ async function performSearch(query) {
     return;
   }
 
-  // Detectar tipo de búsqueda
+  // Detect search type
   if (isURL(query)) {
     showURLSuggestions(query);
   } else if (query.startsWith('/')) {
@@ -682,13 +673,13 @@ async function performSearch(query) {
   }
 }
 
-// Verificar si es una URL
+// Check whether the value is a URL
 function isURL(text) {
   const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
   return urlPattern.test(text) || text.includes('.');
 }
 
-// Mostrar sugerencias para URLs
+// Show URL suggestions
 function showURLSuggestions(url) {
   const suggestions = document.getElementById('commandbar-suggestions');
   const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
@@ -707,7 +698,7 @@ function showURLSuggestions(url) {
     </div>
   `;
   
-  // Buscar en pestañas existentes solo si está habilitado
+  // Search existing tabs only if enabled
   if (userSettings.searchTabs) {
     searchInTabs(url);
   }
@@ -715,7 +706,7 @@ function showURLSuggestions(url) {
 
 
 
-// Mostrar todos los comandos disponibles
+// Show all available commands
 function showAllCommands(filter = '') {
   const suggestions = document.getElementById('commandbar-suggestions');
   const modifierKey = getModifierKey();
@@ -766,26 +757,26 @@ function showAllCommands(filter = '') {
   suggestions.innerHTML = html;
 }
 
-// Mostrar sugerencias de comandos (función legacy)
+// Show command suggestions (legacy)
 function showCommandSuggestions(command) {
   showAllCommands(command);
 }
 
-// Mostrar sugerencias de búsqueda
+// Show search suggestions
 async function showSearchSuggestions(query, keywordPrefix = null) {
   const input = document.getElementById('commandbar-input');
   const suggestionsContainer = document.getElementById('commandbar-suggestions');
 
   if (!input || !suggestionsContainer) return;
 
-  // Limpiar sugerencias anteriores
+  // Clear previous suggestions
   suggestionsContainer.innerHTML = '';
 
   let hasResults = false;
   const currentGeneration = ++searchGeneration;
 
   try {
-    // Determinar qué fuentes buscar basado en configuración
+    // Determine which sources to search per settings
     const searchPromises = [];
 
     if (keywordPrefix === 't') {
@@ -812,7 +803,7 @@ async function showSearchSuggestions(query, keywordPrefix = null) {
       }
     }
 
-    // Ejecutar búsquedas en paralelo
+    // Run searches in parallel
     const results = await Promise.all(searchPromises);
 
     // Discard results if a newer search has started
@@ -864,7 +855,7 @@ function addShortcutBadges() {
   });
 }
 
-// Buscar en pestañas
+// Search tabs
 async function searchInTabs(query) {
   try {
     const response = await chrome.runtime.sendMessage({
@@ -877,12 +868,12 @@ async function searchInTabs(query) {
     }
     return null;
   } catch (error) {
-    console.error('Error buscando en pestañas:', error);
+    console.error('Error searching tabs:', error);
     return null;
   }
 }
 
-// Buscar en bookmarks
+// Search bookmarks
 async function searchInBookmarks(query) {
   try {
     const response = await chrome.runtime.sendMessage({
@@ -900,7 +891,7 @@ async function searchInBookmarks(query) {
   }
 }
 
-// Buscar en historial
+// Search history
 async function searchInHistory(query) {
   try {
     const response = await chrome.runtime.sendMessage({
@@ -918,7 +909,7 @@ async function searchInHistory(query) {
   }
 }
 
-// Agregar resultados de pestañas
+// Add tab results
 function appendTabResults(tabs) {
   const suggestions = document.getElementById('commandbar-suggestions');
   
@@ -938,7 +929,7 @@ function appendTabResults(tabs) {
   suggestions.innerHTML += html;
 }
 
-// Agregar resultados de bookmarks
+// Add bookmark results
 function appendBookmarkResults(bookmarks, maxItems = 2) {
   const suggestions = document.getElementById('commandbar-suggestions');
 
@@ -959,7 +950,7 @@ function appendBookmarkResults(bookmarks, maxItems = 2) {
   suggestions.innerHTML += html;
 }
 
-// Agregar resultados de historial
+// Add history results
 function appendHistoryResults(history, maxItems = 4) {
   const suggestions = document.getElementById('commandbar-suggestions');
 
@@ -979,7 +970,7 @@ function appendHistoryResults(history, maxItems = 4) {
   suggestions.innerHTML += html;
 }
 
-// Mostrar sugerencias por defecto
+// Show default suggestions
 function showDefaultSuggestions() {
   const suggestions = document.getElementById('commandbar-suggestions');
   const modifierKey = getModifierKey();
@@ -1030,7 +1021,7 @@ function showDefaultSuggestions() {
   `;
 }
 
-// Manejar clics en sugerencias
+// Handle suggestion clicks
 function handleSuggestionClick(e) {
   if (e.target.closest('.commandbar-item')) {
     executeAction(e.target.closest('.commandbar-item'));
@@ -1062,10 +1053,10 @@ async function executeAction(item) {
       if (currentTabId) {
         try {
           await chrome.runtime.sendMessage({ action: 'pin_tab', tabId: currentTabId });
-          showToast('Pestaña pineada', 'success');
+          showToast('Tab pinned', 'success');
         } catch (error) {
           console.error('Error pinning tab:', error);
-          showToast('Error al pinear pestaña', 'error');
+          showToast('Error pinning tab', 'error');
         }
       }
       break;
@@ -1075,10 +1066,10 @@ async function executeAction(item) {
       if (currentTabId2) {
         try {
           await chrome.runtime.sendMessage({ action: 'close_tab', tabId: currentTabId2 });
-          showToast('Pestaña cerrada', 'success');
+          showToast('Tab closed', 'success');
         } catch (error) {
           console.error('Error closing tab:', error);
-          showToast('Error al cerrar pestaña', 'error');
+          showToast('Error closing tab', 'error');
         }
       }
       break;
@@ -1088,10 +1079,10 @@ async function executeAction(item) {
       if (currentTabId3) {
         try {
           await chrome.runtime.sendMessage({ action: 'duplicate_tab', tabId: currentTabId3 });
-          showToast('Pestaña duplicada', 'success');
+          showToast('Tab duplicated', 'success');
         } catch (error) {
           console.error('Error duplicating tab:', error);
-          showToast('Error al duplicar pestaña', 'error');
+          showToast('Error duplicating tab', 'error');
         }
       }
       break;
@@ -1101,10 +1092,10 @@ async function executeAction(item) {
       if (currentTabId4) {
         try {
           await chrome.runtime.sendMessage({ action: 'reload_tab', tabId: currentTabId4 });
-          showToast('Pestaña recargada', 'success');
+          showToast('Tab reloaded', 'success');
         } catch (error) {
           console.error('Error reloading tab:', error);
-          showToast('Error al recargar pestaña', 'error');
+          showToast('Error reloading tab', 'error');
         }
       }
       break;
@@ -1122,10 +1113,10 @@ async function executeAction(item) {
     case 'open-bookmark':
     case 'open-history':
       if (isOurExtensionPage()) {
-        // En nuestra página de extensión, navegar en la misma pestaña
+        // On our extension page, navigate in the same tab
         window.location.href = item.dataset.url;
       } else {
-        // En otras páginas, abrir en nueva pestaña (MARCADA COMO DESDE COMMANDBAR)
+        // On other pages, open in new tab (MARKED AS FROM COMMANDBAR)
         await chrome.runtime.sendMessage({
           action: 'create_tab',
           url: item.dataset.url,
@@ -1313,7 +1304,7 @@ async function executeAction(item) {
   hideCommandBar();
 }
 
-// Detectar si estamos en nuestra página de extensión
+// Check if we're on our extension page
 function isOurExtensionPage() {
   return window.location.href.includes('new_tab.html');
 }
@@ -1323,10 +1314,10 @@ async function navigateToUrl(url) {
   const finalUrl = url.startsWith('http') ? url : `https://${url}`;
   
   if (editMode || isOurExtensionPage()) {
-    // En modo edición O en nuestra página de extensión, navegar en la misma pestaña
+    // In edit mode OR on our extension page, navigate in the same tab
     window.location.href = finalUrl;
   } else {
-    // En modo normal en otras páginas, abrir en nueva pestaña (MARCADA COMO DESDE COMMANDBAR)
+    // In normal mode on other pages, open in new tab (MARKED AS FROM COMMANDBAR)
     await chrome.runtime.sendMessage({
       action: 'create_tab',
       url: finalUrl,
@@ -1337,13 +1328,13 @@ async function navigateToUrl(url) {
   hideCommandBar();
 }
 
-// Buscar en Perplexity
+// Search Perplexity
 async function searchInPerplexity(query) {
   if (editMode || isOurExtensionPage()) {
-    // En modo edición O en nuestra página de extensión, buscar en la misma pestaña
+    // In edit mode OR on our extension page, search in the same tab
     window.location.href = `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
   } else {
-    // En modo normal en otras páginas, abrir en nueva pestaña (MARCADA COMO DESDE COMMANDBAR)
+    // In normal mode on other pages, open in new tab (MARKED AS FROM COMMANDBAR)
     await chrome.runtime.sendMessage({
       action: 'create_tab',
       url: `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`,
@@ -1353,7 +1344,7 @@ async function searchInPerplexity(query) {
   hideCommandBar();
 }
 
-// Ejecutar búsqueda directa
+// Run direct search
 async function executeSearch(query) {
   if (isURL(query)) {
     await navigateToUrl(query);
@@ -1361,10 +1352,10 @@ async function executeSearch(query) {
     const searchUrl = getSearchUrl(query);
     
     if (editMode || isOurExtensionPage()) {
-      // En modo edición O en nuestra página de extensión, buscar en la misma pestaña
+      // In edit mode OR on our extension page, search in the same tab
       window.location.href = searchUrl;
     } else {
-      // En modo normal en otras páginas, abrir en nueva pestaña (MARCADA COMO DESDE COMMANDBAR)
+      // In normal mode on other pages, open in new tab (MARKED AS FROM COMMANDBAR)
       await chrome.runtime.sendMessage({
         action: 'create_tab',
         url: searchUrl,
@@ -1375,7 +1366,7 @@ async function executeSearch(query) {
   }
 }
 
-// Ejecutar búsqueda específica en Perplexity
+// Run a Perplexity-specific search
 async function executePerplexitySearch(query) {
   if (isURL(query)) {
     await navigateToUrl(query);
@@ -1383,10 +1374,10 @@ async function executePerplexitySearch(query) {
     const perplexityUrl = getSearchUrl(query, 'perplexity');
     
     if (editMode || isOurExtensionPage()) {
-      // En modo edición O en nuestra página de extensión, buscar en la misma pestaña
+      // In edit mode OR on our extension page, search in the same tab
       window.location.href = perplexityUrl;
     } else {
-      // En modo normal en otras páginas, abrir en nueva pestaña
+      // In normal mode on other pages, open in new tab
       await chrome.runtime.sendMessage({
         action: 'create_tab',
         url: perplexityUrl,
@@ -1397,7 +1388,7 @@ async function executePerplexitySearch(query) {
   }
 }
 
-// Obtener ID de pestaña actual
+// Get current tab ID
 async function getCurrentTabId() {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ action: 'get_current_tab' }, (response) => {
@@ -1411,7 +1402,7 @@ async function getCurrentTabId() {
   });
 }
 
-// Mostrar Command Bar
+// Show Command Bar
 function showCommandBar(prefillUrl = null) {
   if (isSiteExcluded) return;
 
@@ -1432,20 +1423,20 @@ function showCommandBar(prefillUrl = null) {
   setTimeout(() => {
     const input = document.getElementById('commandbar-input');
     if (!input) {
-      console.error('❌ No se encontró commandbar-input');
+      console.error('❌ commandbar-input not found');
       return;
     }
     
     input.focus();
     
     if (prefillUrl) {
-      // Modo edición: rellenar con URL actual
+      // Edit mode: pre-fill with current URL
       editMode = true;
       input.value = prefillUrl;
       input.select(); // Seleccionar todo el texto
       input.placeholder = i18n.t('editUrlPlaceholder');
       
-      // Mostrar hint de modo edición
+      // Show edit-mode hint
       showEditModeHint();
     } else {
       // Modo normal
@@ -1464,20 +1455,20 @@ function hideCommandBar() {
     isCommandBarVisible = false;
     editMode = false;
     
-    // Limpiar input
+    // Clear input
     const input = document.getElementById('commandbar-input');
     input.value = '';
     
-    // Limpiar autocompletado
+    // Clear autocomplete
     clearAutocomplete();
     
-    // Limpiar cache periódicamente para evitar memory leaks
+    // Periodically prune cache to avoid memory leaks
     cleanAutocompleteCache();
     
-    // Limpiar hint de modo edición
+    // Clear edit-mode hint
     clearEditModeHint();
     
-    // Remover selección
+    // Clear selection
     const selected = document.querySelector('.commandbar-item.selected');
     if (selected) {
       selected.classList.remove('selected');
@@ -1494,9 +1485,9 @@ function toggleCommandBar() {
   }
 }
 
-// Mostrar hint de modo edición
+// Show edit-mode hint
 function showEditModeHint() {
-  clearEditModeHint(); // Limpiar hint anterior
+  clearEditModeHint(); // Clear previous hint
   
   const header = document.querySelector('.commandbar-header');
   if (!header) return;
@@ -1512,7 +1503,7 @@ function showEditModeHint() {
   header.appendChild(hintEl);
 }
 
-// Limpiar hint de modo edición
+// Clear edit-mode hint
 function clearEditModeHint() {
   const editHint = document.getElementById('commandbar-edit-hint');
   if (editHint) {
@@ -1520,23 +1511,23 @@ function clearEditModeHint() {
   }
 }
 
-// Mostrar sugerencias integradas en el menú (independiente del autocompletado en la barra)
+// Show inline suggestions in the menu (independent of bar autocomplete)
 function showIntegratedSuggestions(favicon, title, url) {
   const suggestionsContainer = document.getElementById('commandbar-suggestions');
   if (!suggestionsContainer) return;
   
-  // Función interna para crear la sugerencia integrada
+  // Internal helper to create the inline suggestion
   function createIntegratedSuggestion() {
-    // Verificar si ya existe una sección de autocompletado integrada
+    // Check whether an inline autocomplete section already exists
     let existingSection = suggestionsContainer.querySelector('.commandbar-section[data-type="integrated-autocomplete"]');
     
     if (!existingSection) {
-      // Crear nueva sección de autocompletado integrada
+      // Create a new inline autocomplete section
       existingSection = document.createElement('div');
       existingSection.className = 'commandbar-section';
       existingSection.setAttribute('data-type', 'integrated-autocomplete');
       
-      // Usar traducción con fallback más robusto
+      // Use translation with a robust fallback
       let sectionTitle = 'Autocompletado'; // Fallback por defecto
       try {
         if (typeof i18n !== 'undefined' && i18n && typeof i18n.t === 'function') {
@@ -1553,11 +1544,11 @@ function showIntegratedSuggestions(favicon, title, url) {
         <div class="commandbar-section-title">${sectionTitle}</div>
       `;
       
-      // Insertar al principio del contenedor de sugerencias
+      // Insert at the start of the suggestions container
       suggestionsContainer.insertBefore(existingSection, suggestionsContainer.firstChild);
     }
     
-    // Limpiar contenido anterior de la sección
+    // Clear previous section content
     let sectionTitle = 'Autocompletado'; // Fallback por defecto
     try {
       if (typeof i18n !== 'undefined' && i18n && typeof i18n.t === 'function') {
@@ -1574,13 +1565,13 @@ function showIntegratedSuggestions(favicon, title, url) {
       <div class="commandbar-section-title">${sectionTitle}</div>
     `;
     
-    // Crear elemento de autocompletado integrado
+    // Create the inline autocomplete element
     const autocompleteItem = document.createElement('div');
     autocompleteItem.className = 'commandbar-item commandbar-autocomplete-item';
     autocompleteItem.dataset.action = 'navigate';
     autocompleteItem.dataset.url = url;
     
-    // Usar traducción con fallback más robusto
+    // Use translation with a robust fallback
     let actionText = 'Abrir'; // Fallback por defecto
     try {
       if (typeof i18n !== 'undefined' && i18n && typeof i18n.t === 'function') {
@@ -1604,12 +1595,12 @@ function showIntegratedSuggestions(favicon, title, url) {
       <span class="commandbar-shortcut">${actionText}</span>
     `;
     
-    // Agregar evento de clic
+    // Attach click handler
     autocompleteItem.addEventListener('click', () => {
       navigateToUrl(url);
     });
     
-    // Agregar a la sección
+    // Append to the section
     existingSection.appendChild(autocompleteItem);
   }
   
@@ -1622,7 +1613,7 @@ function showIntegratedSuggestions(favicon, title, url) {
       try {
         createIntegratedSuggestion();
       } catch (retryError) {
-        // Si aún falla, crear con fallbacks por defecto
+        // If it still fails, build with default fallbacks
         createIntegratedSuggestion();
       }
     }, 100);
@@ -1637,18 +1628,18 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     toggleCommandBar();
   } else if (message.action === 'edit_current_url') {
     if (isSiteExcluded) return;
-    // Convertir URL completa a formato simple para edición
+    // Convert full URL to a simple form for editing
     let cleanUrl = message.currentUrl;
     try {
       const url = new URL(cleanUrl);
-      // Mostrar dominio + path si no es la raíz
+      // Show domain + path when not the root
       cleanUrl = url.hostname.replace('www.', '') + (url.pathname !== '/' ? url.pathname : '') + url.search;
     } catch (e) {
-      // Si no es una URL válida, usar como está
+      // If not a valid URL, use as-is
     }
     showCommandBar(cleanUrl);
   } else if (message.action === 'settings_updated') {
-    // Actualizar configuración local
+    // Update local settings
     if (message.settings) {
       if (message.settings.defaultSearchEngine !== undefined) {
         userSettings.defaultSearchEngine = message.settings.defaultSearchEngine;
@@ -1684,11 +1675,11 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }
     }
     
-    // Actualizar configuración del idioma
+    // Update language setting
     if (message.settings && message.settings.language) {
       await i18n.setLanguage(message.settings.language);
       
-      // Si CommandBar está visible, actualizarlo
+      // If CommandBar is visible, refresh it
       if (isCommandBarVisible) {
         const input = document.getElementById('commandbar-input');
         const currentValue = input ? input.value : '';
@@ -1702,7 +1693,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         createCommandBar();
         showCommandBar();
         
-        // Restaurar valor del input si había algo
+        // Restore the input value if there was one
         if (currentValue && input) {
           setTimeout(() => {
             const newInput = document.getElementById('commandbar-input');
@@ -1742,25 +1733,25 @@ document.addEventListener('keydown', (e) => {
   }
 }, true);
 
-// Función de inicialización principal
+// Main initialization
 async function initializeContentScript() {
   try {
-    // Verificar si ya está inicializado
+    // Skip if already initialized
     if (isInitialized) {
       return;
     }
     
-    // Verificar si estamos en una página donde podemos ejecutarnos
+    // Skip if we are on a page we cannot run on
     if (!window.chrome || !chrome.storage) {
       return; // Salir silenciosamente si no hay APIs disponibles
     }
     
-    // Cargar configuración del usuario
+    // Load user settings
     await loadUserSettings();
     
-    // Esperar un poco más para asegurar que i18n esté completamente cargado
+    // Wait a bit longer to ensure i18n is fully loaded
     if (typeof i18n !== 'undefined' && i18n && typeof i18n.setLanguage === 'function') {
-      // Verificar que el idioma esté correctamente cargado
+      // Verify the language is loaded correctly
       const currentLanguage = i18n.getCurrentLanguage();
       if (currentLanguage !== userSettings.language) {
         await i18n.setLanguage(userSettings.language);
@@ -1771,15 +1762,15 @@ async function initializeContentScript() {
     isInitialized = true;
     
   } catch (error) {
-    // Error silencioso para evitar spam en consola de páginas problemáticas
-    // Solo registrar errores críticos que realmente necesiten atención
+    // Silent error to avoid console spam on problematic pages
+    // Only log critical errors that really need attention
     if (error.message && !error.message.includes('Extension context invalidated')) {
       console.error('CommandBar initialization failed:', error.message);
     }
   }
 }
 
-// Inicializar cuando el DOM esté listo
+// Initialize when the DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeContentScript);
 } else {
